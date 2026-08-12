@@ -2,647 +2,751 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Refresh Opportunity Scoring — FlyRank ML Capstone</title>
-<meta name="description" content="A research study on prioritizing search-content refresh opportunities using observable performance signals, a transparent baseline, and two machine-learning models.">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Refresh Opportunity Scoring for Search Content — Syed Muneeb Haider Shah</title>
+<meta name="description" content="FlyRank Machine Learning Capstone — a research study on prioritizing search-content refresh opportunities using observable signals and leakage-aware validation.">
+<meta name="author" content="Syed Muneeb Haider Shah">
+
 <style>
 :root{
-  --paper:#f7fbff;
-  --paper2:#eef7ff;
-  --ink:#13253a;
-  --muted:#5f748b;
-  --line:#d9e8f5;
-  --blue:#1597e8;
-  --blue2:#69c5ff;
+  --bg:#f6fbff;
+  --paper:#ffffff;
+  --ink:#17324a;
+  --text:#284a62;
+  --muted:#6f8799;
+  --line:#d8e7f1;
+  --line2:#eaf2f7;
+  --blue:#1689d3;
+  --blue2:#4bb9f0;
   --blue3:#dff3ff;
-  --navy:#163653;
-  --green:#159a72;
-  --amber:#c47b12;
-  --shadow:0 18px 55px rgba(27,82,123,.11);
-  --radius:18px;
-  --max:1180px;
+  --navy:#123d5b;
+  --green:#187b63;
+  --green-bg:#ebf8f4;
+  --amber:#a56e15;
+  --amber-bg:#fff8ea;
+  --shadow:0 12px 38px rgba(23,75,110,.075);
+  --max:1120px;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
   margin:0;
   background:
-    radial-gradient(circle at 10% 0%,rgba(105,197,255,.15),transparent 28%),
-    radial-gradient(circle at 95% 8%,rgba(21,151,232,.09),transparent 24%),
-    linear-gradient(180deg,#ffffff 0%,var(--paper) 38%,#ffffff 100%);
-  color:var(--ink);
-  font:16px/1.78 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    radial-gradient(circle at 8% 0%,rgba(75,185,240,.13),transparent 24%),
+    radial-gradient(circle at 100% 7%,rgba(22,137,211,.08),transparent 20%),
+    linear-gradient(180deg,#fff 0%,var(--bg) 35%,#fff 100%);
+  color:var(--text);
+  font:16px/1.8 Georgia,"Times New Roman",serif;
 }
-a{color:#087dcc;text-decoration:none}
+a{color:var(--blue);text-decoration:none}
 a:hover{text-decoration:underline}
-.container{width:min(var(--max),calc(100% - 40px));margin:auto}
-.header{
-  position:sticky;top:0;z-index:30;
-  backdrop-filter:blur(18px);
-  background:rgba(255,255,255,.86);
-  border-bottom:1px solid rgba(183,211,232,.65)
-}
-.header-inner{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{display:flex;align-items:center;gap:11px;color:var(--navy);font-weight:850}
-.mark{
-  width:34px;height:34px;border-radius:10px;
-  display:grid;place-items:center;
-  background:linear-gradient(145deg,var(--blue2),var(--blue));
-  color:#fff;font-weight:900;
-  box-shadow:0 8px 22px rgba(21,151,232,.22)
-}
-.nav{display:flex;gap:18px;flex-wrap:wrap}
-.nav a{font-size:13px;font-weight:750;color:#5b728a}
-.nav a:hover{color:var(--blue);text-decoration:none}
+.wrap{width:min(var(--max),calc(100% - 42px));margin:auto}
 
-.hero{padding:92px 0 58px}
+.sitebar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.sitebar-in{
+  min-height:68px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px
+}
+.identity{
+  display:flex;align-items:center;gap:10px;
+  font:800 13px/1.2 Inter,system-ui,sans-serif;
+  color:var(--navy);
+  letter-spacing:.02em
+}
+.identity-mark{
+  width:11px;height:11px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue2),var(--blue))
+}
+.nav{
+  display:flex;gap:17px;flex-wrap:wrap;
+  font:700 12px/1.2 Inter,system-ui,sans-serif
+}
+.nav a{color:var(--muted)}
+.nav a:hover{color:var(--navy);text-decoration:none}
+
+.hero{padding:84px 0 45px}
 .kicker{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:7px 11px;border:1px solid #cbe7f8;border-radius:999px;
-  background:#eef9ff;color:#2777a6;
-  text-transform:uppercase;letter-spacing:.1em;
-  font-size:11px;font-weight:900
+  font:800 11px/1.2 Inter,system-ui,sans-serif;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--blue)
 }
-.hero h1{
-  margin:20px 0 14px;
+h1{
+  margin:18px 0 16px;
   max-width:980px;
-  font-size:clamp(45px,7vw,82px);
-  line-height:.99;
-  letter-spacing:-.055em;
-  color:var(--navy)
+  color:var(--navy);
+  font-size:clamp(43px,6.2vw,76px);
+  line-height:1.01;
+  letter-spacing:-.045em;
+  font-weight:700
 }
-.hero h1 em{
-  color:var(--blue);
-  font-style:normal
-}
-.hero-lead{
-  max-width:880px;
-  color:var(--muted);
+h1 span{color:var(--blue)}
+.subtitle{
+  max-width:850px;
+  margin:0;
+  color:#35546b;
   font-size:20px;
   line-height:1.65
 }
-.meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}
-.pill{
-  border:1px solid #cce5f5;background:#fff;
-  border-radius:999px;padding:7px 11px;
-  color:#52718c;font-size:12px;font-weight:750
+.meta{
+  display:flex;flex-wrap:wrap;gap:9px 18px;
+  margin-top:22px;
+  font:600 12px/1.4 Inter,system-ui,sans-serif;
+  color:var(--muted)
 }
+.ruleline{
+  height:1px;
+  background:linear-gradient(90deg,var(--blue),#bfe4f6,transparent);
+  margin-top:28px
+}
+
 .abstract{
-  margin-top:38px;
-  background:linear-gradient(135deg,#effaff,#ffffff);
-  border:1px solid #cbe7f8;
-  border-radius:24px;padding:30px 32px;
+  margin-top:30px;
+  padding:27px 29px;
+  border:1px solid var(--line);
+  background:linear-gradient(135deg,#edf9ff,#fff);
+  border-radius:14px;
   box-shadow:var(--shadow)
 }
-.abstract .label{
-  font-size:11px;text-transform:uppercase;letter-spacing:.11em;
-  color:#2c82b5;font-weight:900
+.abstract-label{
+  font:900 10px/1.2 Inter,system-ui,sans-serif;
+  text-transform:uppercase;letter-spacing:.11em;color:#2a7dab;
+  margin-bottom:8px
 }
-.abstract p{margin:9px 0 0;color:#29455e}
+.abstract p{margin:0;color:#274961}
 
-.section{padding:60px 0;scroll-margin-top:90px}
-.section-head{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:28px}
-.section-num{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#4c9bc7;font-weight:900}
-h2{margin:6px 0 0;font-size:36px;line-height:1.12;letter-spacing:-.035em;color:var(--navy)}
-.intro{max-width:760px;color:var(--muted)}
-
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.kpi{
-  background:#fff;border:1px solid var(--line);
-  border-radius:var(--radius);padding:22px;
-  box-shadow:0 10px 30px rgba(35,91,132,.06)
+.paper{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 235px;
+  gap:42px
 }
-.kpi .small{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6f879c;font-weight:850}
-.kpi .big{margin-top:8px;font-size:31px;font-weight:900;color:var(--navy);letter-spacing:-.04em}
-.kpi .note{margin-top:7px;color:#6b8195;font-size:12px}
-
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.card{
-  background:#fff;border:1px solid var(--line);
-  border-radius:var(--radius);padding:26px;
-  box-shadow:0 8px 25px rgba(35,91,132,.045)
+main{min-width:0}
+aside{align-self:start;position:sticky;top:92px}
+.side{
+  border-left:3px solid var(--blue);
+  padding-left:14px
 }
-.card h3{margin:0 0 10px;font-size:19px;color:var(--navy)}
-.card p:last-child{margin-bottom:0}
-.rule{
+.side-title{
+  font:900 10px/1.2 Inter,system-ui,sans-serif;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+  margin-bottom:8px
+}
+.side p{font:12px/1.55 Inter,system-ui,sans-serif;color:#567086;margin:0 0 14px}
+.side nav{display:grid;gap:8px;margin-top:20px}
+.side nav a{font:12px/1.35 Inter,system-ui,sans-serif;color:#71879a}
+.side nav a:hover{color:var(--blue);text-decoration:none}
+
+section{padding:50px 0 0;scroll-margin-top:88px}
+.section-tag{
+  font:900 10px/1.2 Inter,system-ui,sans-serif;
+  text-transform:uppercase;letter-spacing:.11em;color:#3e9acc
+}
+h2{
+  margin:7px 0 17px;
+  color:var(--navy);
+  font-size:32px;
+  line-height:1.15;
+  letter-spacing:-.03em
+}
+h3{color:#214961;font-size:19px;line-height:1.3;margin:26px 0 8px}
+.lead{font-size:18px;color:#3a586d}
+p{margin:0 0 17px}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:21px 0
+}
+.stat{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:18px;
+  box-shadow:var(--shadow)
+}
+.stat-l{
+  font:900 10px/1.2 Inter,system-ui,sans-serif;
+  text-transform:uppercase;letter-spacing:.07em;color:#71889a
+}
+.stat-v{
+  margin-top:7px;
+  color:var(--blue-dark,var(--blue));
+  font:900 27px/1.1 Inter,system-ui,sans-serif;
+  letter-spacing:-.03em
+}
+.stat-n{
+  margin-top:5px;
+  color:#74899a;
+  font:10px/1.4 Inter,system-ui,sans-serif
+}
+
+.callout{
+  margin:23px 0;
+  padding:17px 19px;
+  border:1px solid var(--line);
   border-left:4px solid var(--blue);
-  background:#eef9ff;
-  padding:17px 19px;border-radius:0 14px 14px 0;
-  margin:22px 0
+  background:#f7fcff;
+  border-radius:0 11px 11px 0
 }
-.rule.green{border-left-color:var(--green);background:#eefaf6}
-.rule.amber{border-left-color:#d98b1a;background:#fff7e9}
+.callout.green{border-left-color:var(--green);background:var(--green-bg)}
+.callout.amber{border-left-color:#ca8a18;background:var(--amber-bg)}
 
-.inline-tag{
-  display:inline-block;margin:3px 5px 3px 0;
-  padding:5px 8px;border-radius:999px;
-  background:var(--blue3);color:#236e99;
-  border:1px solid #c8e8fa;font-size:11px;font-weight:850
+.two{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+.card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:22px;
+  box-shadow:0 8px 25px rgba(23,75,110,.045)
 }
+.card h4{
+  margin:0 0 7px;
+  font:900 10px/1.2 Inter,system-ui,sans-serif;
+  text-transform:uppercase;letter-spacing:.09em;color:#4f8eae
+}
+.card p:last-child{margin-bottom:0}
 
-.data-table{
-  width:100%;border-collapse:collapse;margin-top:14px;
-  border:1px solid var(--line);border-radius:14px;overflow:hidden
+.table{
+  width:100%;
+  border-collapse:collapse;
+  margin:19px 0;
+  background:#fff;
+  border:1px solid var(--line)
 }
-.data-table th,.data-table td{
-  padding:13px 14px;border-bottom:1px solid var(--line);
+.table th,.table td{
+  padding:12px 13px;
+  border-bottom:1px solid var(--line2);
   text-align:left;vertical-align:top
 }
-.data-table th{
-  background:#f1f8fd;color:#4c6b84;
-  font-size:11px;text-transform:uppercase;letter-spacing:.07em
+.table th{
+  background:#f3f8fb;
+  color:#506b7e;
+  font:900 10px/1.2 Inter,system-ui,sans-serif;
+  text-transform:uppercase;letter-spacing:.06em
 }
-.data-table tr:last-child td{border-bottom:0}
+.table td{font-size:14px}
+.table tr:last-child td{border-bottom:0}
+.table .best td{background:#f0faf6}
 
-.flow{
-  display:grid;grid-template-columns:repeat(5,1fr);gap:10px
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:21px 0}
+.flow-box{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px;
+  min-height:122px
 }
-.flow-item{
-  border:1px solid #cfe7f6;background:#fff;
-  border-radius:15px;padding:18px;position:relative;
-  min-height:126px
-}
-.flow-item:not(:last-child)::after{
-  content:"→";position:absolute;right:-15px;top:42%;
-  color:#55afe4;font-weight:900;z-index:3
-}
-.flow-index{color:#4d9fca;font-size:10px;font-weight:900;letter-spacing:.1em}
-.flow-title{margin-top:7px;font-weight:850;color:var(--navy)}
-.flow-text{margin-top:4px;color:#71869a;font-size:12px;line-height:1.5}
+.flow-no{font:900 10px/1.2 Inter,system-ui,sans-serif;color:var(--blue)}
+.flow-title{margin-top:6px;font:850 13px/1.3 Inter,system-ui,sans-serif;color:var(--navy)}
+.flow-text{margin-top:5px;color:#718799;font:11px/1.5 Inter,system-ui,sans-serif}
 
-.metric{
-  display:grid;gap:15px;
+.bars{display:grid;gap:15px;margin:21px 0}
+.bar{
+  display:grid;
+  grid-template-columns:165px 1fr 55px;
+  gap:11px;
+  align-items:center
 }
-.metric-row{
-  display:grid;grid-template-columns:170px 1fr 70px;
-  gap:12px;align-items:center
-}
-.metric-name{font-size:14px;font-weight:750;color:#3d5971}
-.track{
-  height:12px;background:#e9f2f8;border-radius:999px;overflow:hidden
-}
-.fill{
-  height:100%;border-radius:999px;
-  background:linear-gradient(90deg,#7ed2ff,#1597e8)
-}
-.metric-value{text-align:right;font-weight:900;color:var(--navy)}
+.bar-name{font:700 12px/1.3 Inter,system-ui,sans-serif;color:#466175}
+.track{height:11px;background:#e8f0f5;border-radius:999px;overflow:hidden}
+.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#98dcff,var(--blue))}
+.bar-v{text-align:right;font:900 12px/1.2 Inter,system-ui,sans-serif;color:#0c6e9e}
 
-.findings{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.findings{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
 .finding{
-  background:#fff;border:1px solid var(--line);
-  border-radius:17px;padding:22px
+  border-top:2px solid #74c7ed;
+  padding-top:14px
 }
-.finding .no{
-  width:28px;height:28px;border-radius:9px;
-  display:grid;place-items:center;
-  background:#e9f7ff;color:#1c85bc;
-  font-weight:900;font-size:12px
-}
-.finding h3{margin:12px 0 7px;color:var(--navy);font-size:17px}
-.finding p{margin:0;color:#688098}
+.finding h3{margin:0 0 7px}
+.finding p{color:#708596}
 
-.steps{display:grid;gap:13px}
-.step{
-  display:grid;grid-template-columns:38px 1fr;
-  gap:13px;align-items:start
+ol{padding-left:24px}
+li{padding-left:4px;margin:8px 0}
+
+.mono{
+  display:inline-block;
+  background:#f0f7fb;
+  border:1px solid #dcebf3;
+  padding:2px 6px;border-radius:5px;
+  font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:#2d6f95
 }
-.step-no{
-  width:38px;height:38px;border-radius:11px;
-  display:grid;place-items:center;
-  background:#edf8ff;border:1px solid #cae8f7;
-  color:#2689bd;font-weight:900
-}
-.step strong{color:var(--navy)}
 
 .footer{
-  margin-top:40px;padding:46px 0 70px;
+  margin-top:58px;
+  padding:30px 0 65px;
   border-top:1px solid var(--line);
-  color:#6a7e92
+  color:#718697;
+  font:12px/1.65 Inter,system-ui,sans-serif
 }
-.disclaimer{
-  margin-top:22px;
-  border:1px solid #f1dfbd;
-  background:#fffaf0;color:#7c6949;
-  padding:17px 19px;border-radius:14px;font-size:13px
-}
-code{
-  background:#f0f7fc;border:1px solid #d7eaf6;
-  border-radius:6px;padding:2px 6px;color:#2a6e96
-}
+.footer a{font-weight:700}
+.links{display:flex;flex-wrap:wrap;gap:14px;margin-top:9px}
 
-@media(max-width:950px){
-  .kpis{grid-template-columns:repeat(2,1fr)}
-  .grid2,.findings{grid-template-columns:1fr}
+@media(max-width:900px){
+  .paper{grid-template-columns:1fr}
+  aside{position:static}
+  .stats{grid-template-columns:repeat(2,1fr)}
   .flow{grid-template-columns:1fr}
-  .flow-item:not(:last-child)::after{display:none}
+  .two,.findings{grid-template-columns:1fr}
   .nav{display:none}
 }
 @media(max-width:620px){
-  .container{width:min(var(--max),calc(100% - 24px))}
-  .hero{padding-top:58px}
-  .hero h1{font-size:45px}
-  .kpis{grid-template-columns:1fr}
-  .metric-row{grid-template-columns:1fr}
-  .metric-value{text-align:left}
-  .abstract,.card,.kpi{padding:20px}
+  .wrap{width:min(var(--max),calc(100% - 26px))}
+  .hero{padding-top:53px}
+  h1{font-size:45px}
+  .stats{grid-template-columns:1fr}
+  .bar{grid-template-columns:1fr}
+  .bar-v{text-align:left}
 }
 </style>
 </head>
 
 <body>
-<header class="header">
-  <div class="container header-inner">
-    <a class="brand" href="#">
-      <span class="mark">F</span>
-      <span>FlyRank · Search Intelligence</span>
-    </a>
+
+<header class="sitebar">
+  <div class="wrap sitebar-in">
+    <div class="identity"><span class="identity-mark"></span>FlyRank · Search Intelligence</div>
     <nav class="nav">
       <a href="#question">Question</a>
       <a href="#data">Data</a>
       <a href="#method">Method</a>
       <a href="#results">Results</a>
-      <a href="#recommendations">Actions</a>
-      <a href="#limits">Limits</a>
+      <a href="#recommendations">Recommendations</a>
+      <a href="#limits">Limitations</a>
       <a href="#repro">Reproducibility</a>
     </nav>
   </div>
 </header>
 
+<div class="wrap hero">
+  <div class="kicker">Machine Learning Capstone · Research Paper</div>
+  <h1>Refresh Opportunity Scoring for <span>Search Content</span></h1>
+  <p class="subtitle">
+    A practical study of whether observable search-performance and content signals can help a
+    content team decide which pages deserve review first.
+  </p>
+  <div class="meta">
+    <span><strong>Author:</strong> Syed Muneeb Haider Shah</span>
+    <span><strong>Program:</strong> FlyRank Machine Learning Internship</span>
+    <span><strong>Warehouse:</strong> v20260703</span>
+    <span><strong>Window:</strong> April–June 2026</span>
+  </div>
+  <div class="ruleline"></div>
+
+  <div class="abstract">
+    <div class="abstract-label">Abstract</div>
+    <p>
+      Content teams rarely struggle to find pages; they struggle to decide which pages deserve
+      attention first. This study examines whether a small set of historical search-performance
+      and content signals can support that decision without relying on a complicated model or
+      making claims about Google's internal ranking system. Using the FlyRank internship
+      warehouse, the analysis constructs a client-content comparison set for April through June
+      2026 and defines an observed decline outcome as a June impression level at least 20% below
+      April. A transparent rule-based score is evaluated against Logistic Regression and Random
+      Forest using a client-grouped holdout and Precision@50. The rule baseline reaches a measured
+      Precision@50 of 0.80, compared with 0.68 for Random Forest and 0.56 for Logistic Regression.
+      In this experiment, the simpler rule is the strongest measured method for prioritizing the
+      first 50 review candidates.
+    </p>
+  </div>
+</div>
+
+<div class="wrap paper">
+
 <main>
 
-<section class="hero">
-  <div class="container">
-    <div class="kicker">Machine Learning Capstone · Research Paper</div>
-    <h1>Which content deserves attention <em>first?</em></h1>
-    <p class="hero-lead">
-      Refresh Opportunity Scoring for search content: a study of whether machine learning
-      can improve a practical review queue built from observable search-performance and
-      content signals.
-    </p>
-    <div class="meta">
-      <span class="pill">FlyRank ML Internship</span>
-      <span class="pill">Warehouse v20260703</span>
-      <span class="pill">April 1 – June 30, 2026</span>
-      <span class="pill">104,301 modeling records</span>
-      <span class="pill">Client-grouped holdout</span>
-    </div>
+<section id="question">
+  <div class="section-tag">01 · Introduction / Problem statement</div>
+  <h2>The problem is prioritization, not automation for its own sake</h2>
 
-    <div class="abstract">
-      <div class="label">Abstract</div>
-      <p>
-        Search-content teams often have more pages to review than editorial capacity allows.
-        This study asks whether observed search-performance signals can be turned into a useful
-        refresh-prioritization queue. Using the FlyRank internship warehouse, the analysis compares
-        a transparent rule-based score with Logistic Regression and Random Forest, while keeping
-        later outcome information outside the model inputs. The evaluation uses a client-grouped
-        holdout and Precision@50 to reflect the quality of the first 50 review recommendations.
-        The rule baseline achieved a measured Precision@50 of 0.80, compared with 0.68 for Random
-        Forest and 0.56 for Logistic Regression. In this experiment, the simpler rule provided
-        stronger observed top-of-queue prioritization than the tested machine-learning models.
-      </p>
-    </div>
+  <p class="lead">
+    A content library can contain thousands of pages, while the team responsible for keeping that
+    library useful has a much smaller review budget. A good search-intelligence workflow therefore
+    does not need to decide everything automatically. It needs to make the first part of the queue
+    more sensible.
+  </p>
+
+  <p>
+    The research question is:
+    <strong>Which published content items should be prioritized for refresh review based on observed
+    search-performance signals and content characteristics?</strong>
+  </p>
+
+  <p>
+    The intended user is an editorial or SEO team deciding what to investigate next. The output is
+    a ranked review queue. It is deliberately narrower than an automated rewrite system: a high
+    score identifies an item for earlier attention, while a human decides whether the correct action
+    is a refresh, a metadata review, monitoring, consolidation, or no action.
+  </p>
+
+  <div class="callout">
+    <strong>Working principle:</strong> improve the quality of the review queue before adding more
+    automation.
   </div>
 </section>
 
-<section class="section" id="question">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">01 · Research question</div><h2>Start with the decision, not the model</h2></div>
-  </div>
-  <div class="grid2">
-    <div class="card">
-      <h3>The question</h3>
-      <p>Which published content items should be prioritized for refresh review based on observed search-performance signals and content characteristics?</p>
-    </div>
-    <div class="card">
-      <h3>The decision</h3>
-      <p>When review capacity is limited, which pages should an editorial or SEO team inspect earlier than the rest?</p>
-    </div>
-  </div>
-  <div class="rule">
-    <strong>Intended use.</strong> The output is a review queue. A high score means “look here earlier,” not “rewrite this page automatically.”
-  </div>
-</div>
-</section>
+<section id="data">
+  <div class="section-tag">02 · Data</div>
+  <h2>What was measured and how the population was defined</h2>
 
-<section class="section" id="data">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">02 · Data</div><h2>A warehouse-sized source, reduced before modeling</h2></div>
+  <p>
+    The study uses the FlyRank internship warehouse release <strong>v20260703</strong>.
+    The primary performance source is <span class="mono">fact_content_daily_performance</span>;
+    the contextual source is <span class="mono">dim_content</span>. The daily performance table
+    provides search-performance measurements, while the content dimension provides information
+    about the item itself.
+  </p>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-l">Daily rows</div><div class="stat-v">33.806M</div><div class="stat-n">April 1–June 30, 2026</div></div>
+    <div class="stat"><div class="stat-l">Clients represented</div><div class="stat-v">66</div><div class="stat-n">Within the chosen window</div></div>
+    <div class="stat"><div class="stat-l">Comparable pairs</div><div class="stat-v">158,700</div><div class="stat-n">Both April and June observed</div></div>
+    <div class="stat"><div class="stat-l">Modeling set</div><div class="stat-v">104,301</div><div class="stat-n">Published + non-deleted + ≥100 April impressions</div></div>
   </div>
 
-  <div class="kpis">
-    <div class="kpi"><div class="small">April–June daily rows</div><div class="big">33.806M</div><div class="note">Performance records scanned</div></div>
-    <div class="kpi"><div class="small">Clients represented</div><div class="big">66</div><div class="note">Within the chosen window</div></div>
-    <div class="kpi"><div class="small">Comparable pairs</div><div class="big">158,700</div><div class="note">Observed in both April and June</div></div>
-    <div class="kpi"><div class="small">Modeling records</div><div class="big">104,301</div><div class="note">Published, non-deleted, ≥100 April impressions</div></div>
-  </div>
+  <h3>Observation window</h3>
+  <p>
+    April is the historical reference period and June is the later observed outcome period.
+    Requiring both periods helps avoid treating missing history as evidence of decline. A separate
+    June-only development sample was used while constructing the remote SQL logic so that large
+    warehouse scans were not repeatedly performed during iteration.
+  </p>
 
-  <div class="grid2" style="margin-top:18px">
-    <div class="card">
-      <h3>Warehouse sources</h3>
-      <div>
-        <span class="inline-tag">fact_content_daily_performance</span>
-        <span class="inline-tag">dim_content</span>
-      </div>
-      <p>
-        Daily performance supplies GSC impressions, clicks, CTR-related inputs and position-related
-        measurements. The content dimension supplies contextual information such as search volume,
-        competition, content type, word count, backlinks, creation date, update date and optimization date.
-      </p>
-    </div>
+  <h3>Grain and duplicate check</h3>
+  <p>
+    The daily source was checked at the
+    <strong>report_date × client × content</strong> grain. The June development sample contained
+    11,694,072 rows. A grain probe identified 6,390 additional duplicate rows. The duplicate records
+    inspected were exact matches across their available fields, so they were removed rather than
+    counted as separate performance observations.
+  </p>
 
-    <div class="card">
-      <h3>Why this time window?</h3>
-      <p>
-        April provides the historical reference period. June provides a later observed outcome.
-        Requiring both periods prevents a newly observed item from being interpreted as a “decline”
-        simply because it lacked the earlier measurement.
-      </p>
-    </div>
-  </div>
-
-  <table class="data-table">
+  <table class="table">
     <thead>
-      <tr><th>Data decision</th><th>Observed fact</th><th>Reason</th></tr>
+      <tr><th>Decision</th><th>Observed result</th><th>Why it matters</th></tr>
     </thead>
     <tbody>
-      <tr><td>Daily grain</td><td>report_date × client × content</td><td>Required before aggregation</td></tr>
-      <tr><td>Duplicate handling</td><td>6,390 duplicate rows in the June development sample</td><td>Duplicates were exact matches and were removed</td></tr>
-      <tr><td>Comparison population</td><td>158,700 pairs with both April and June observations</td><td>Supports a direct two-period comparison</td></tr>
-      <tr><td>Modeling filter</td><td>Published + non-deleted + ≥100 April impressions</td><td>Reduces unstable percentage changes from tiny denominators</td></tr>
+      <tr><td>Compare April with June</td><td>158,700 client-content pairs</td><td>Provides a direct two-period observation</td></tr>
+      <tr><td>Published and non-deleted only</td><td>104,301 final modeling records</td><td>Keeps the review queue focused on live content</td></tr>
+      <tr><td>Minimum 100 April impressions</td><td>Applied to modeling population</td><td>Reduces extreme percentage changes caused by tiny denominators</td></tr>
+      <tr><td>Identifiers excluded from prediction</td><td>Used only for joins, grouping and splitting</td><td>Prevents identity from becoming a predictive shortcut</td></tr>
     </tbody>
   </table>
 
-  <div class="rule amber">
-    <strong>Coverage caveat.</strong> Client history is uneven across the warehouse. The design therefore uses only rows where the required GSC observations are available rather than assuming identical history for every client.
+  <div class="callout amber">
+    <strong>Coverage caveat.</strong> Client history is uneven across the warehouse. The analysis
+    therefore works with records where the required GSC observations are available instead of
+    assuming identical history for every client.
   </div>
-</div>
 </section>
 
-<section class="section" id="method">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">03 · Methodology</div><h2>Historical features → controlled evaluation → ranked queue</h2></div>
-  </div>
+<section id="method">
+  <div class="section-tag">03 · Methodology</div>
+  <h2>Historical inputs → controlled evaluation → review queue</h2>
 
   <div class="flow">
-    <div class="flow-item"><div class="flow-index">01</div><div class="flow-title">Historical inputs</div><div class="flow-text">April search performance + content metadata.</div></div>
-    <div class="flow-item"><div class="flow-index">02</div><div class="flow-title">Observed outcome</div><div class="flow-text">June impressions at least 20% below April.</div></div>
-    <div class="flow-item"><div class="flow-index">03</div><div class="flow-title">Holdout</div><div class="flow-text">Entire clients kept apart between train and holdout.</div></div>
-    <div class="flow-item"><div class="flow-index">04</div><div class="flow-title">Comparison</div><div class="flow-text">Simple baseline vs two supervised models.</div></div>
-    <div class="flow-item"><div class="flow-index">05</div><div class="flow-title">Action</div><div class="flow-text">Rank the items that deserve review first.</div></div>
+    <div class="flow-box"><div class="flow-no">01</div><div class="flow-title">Historical inputs</div><div class="flow-text">April search performance and content context.</div></div>
+    <div class="flow-box"><div class="flow-no">02</div><div class="flow-title">Observed outcome</div><div class="flow-text">June impressions at least 20% below April.</div></div>
+    <div class="flow-box"><div class="flow-no">03</div><div class="flow-title">Grouped holdout</div><div class="flow-text">Clients stay entirely in train or holdout.</div></div>
+    <div class="flow-box"><div class="flow-no">04</div><div class="flow-title">Comparison</div><div class="flow-text">Rule, Logistic Regression, Random Forest.</div></div>
+    <div class="flow-box"><div class="flow-no">05</div><div class="flow-title">Action</div><div class="flow-text">Rank items that deserve review first.</div></div>
   </div>
 
-  <div class="grid2" style="margin-top:18px">
-    <div class="card">
-      <h3>Historical feature set</h3>
-      <p>
-        <span class="inline-tag">April impressions</span>
-        <span class="inline-tag">April clicks</span>
-        <span class="inline-tag">April CTR</span>
-        <span class="inline-tag">April average position</span>
-        <span class="inline-tag">search volume</span>
-        <span class="inline-tag">competition</span>
-        <span class="inline-tag">backlinks</span>
-        <span class="inline-tag">word count</span>
-        <span class="inline-tag">character count</span>
-        <span class="inline-tag">content age</span>
-        <span class="inline-tag">days since update</span>
-      </p>
-      <p>
-        Missing metadata was represented with explicit missingness indicators before imputation.
-        Client and content identifiers were used for grouping and joins, not prediction.
-      </p>
-    </div>
+  <h3>Feature design</h3>
+  <p>
+    The feature set is historical rather than outcome-aware. It uses April impressions, clicks,
+    CTR and average position, along with search volume, competition, backlinks, character count,
+    word count, content age and days since update. Where metadata was missing, missingness was
+    represented explicitly before imputation instead of silently converting absence to zero.
+  </p>
 
+  <div class="two">
     <div class="card">
-      <h3>Observed target</h3>
+      <h4>Historical inputs</h4>
       <p>
-        <code>is_declining = 1</code> when June impressions were at least 20% below April impressions.
+        April impressions · April clicks · April CTR · April average position · search volume ·
+        competition · backlinks · character count · word count · content age · days since update
       </p>
-      <p>
-        In the 104,301-record modeling population, 77,431 records were labeled declining and
-        26,870 were not.
-      </p>
-      <div class="rule green">
-        This is an observed proxy outcome. It is not a measure of Google's internal ranking state.
-      </div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:18px">
-    <h3>Leakage and privacy controls</h3>
-    <table class="data-table">
-      <thead><tr><th>Excluded from model inputs</th><th>Why</th></tr></thead>
-      <tbody>
-        <tr><td>June impressions, clicks, CTR and position</td><td>They belong to the later outcome period</td></tr>
-        <tr><td>April→June impression change</td><td>Directly encodes the target outcome</td></tr>
-        <tr><td>Decline label</td><td>It is the evaluation target</td></tr>
-        <tr><td>Client/content identifiers</td><td>Used only for joins, grouping and splitting</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="grid2" style="margin-top:18px">
-    <div class="card">
-      <h3>Validation design</h3>
-      <p>
-        A client-grouped holdout was used to prevent content from the same client appearing in both
-        training and evaluation.
-      </p>
-      <table class="data-table">
-        <tbody>
-          <tr><td>Training</td><td>99,796 records / 35 clients</td></tr>
-          <tr><td>Holdout</td><td>4,505 records / 9 clients</td></tr>
-          <tr><td>Measured client overlap</td><td><strong>0</strong></td></tr>
-        </tbody>
-      </table>
     </div>
     <div class="card">
-      <h3>Why Precision@50?</h3>
+      <h4>Kept out of the model</h4>
       <p>
-        The operational question is not “How accurate is every row?” It is “How useful are the first
-        few recommendations?” Precision@50 therefore evaluates the concentration of observed declines
-        at the top of the queue.
+        June performance · April-to-June change · decline label · client/content identifiers as
+        predictive features
       </p>
     </div>
   </div>
-</div>
-</section>
 
-<section class="section" id="results">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">04 · Results</div><h2>The transparent baseline outperformed both ML models</h2></div>
+  <h3>Observed outcome</h3>
+  <p>
+    A record is labeled <span class="mono">is_declining = 1</span> when June impressions are at
+    least 20% below April impressions. In the final 104,301-record modeling population, 77,431
+    records were labeled declining and 26,870 were not.
+  </p>
+
+  <div class="callout">
+    <strong>Scope of the target.</strong> “Declining” is a measured outcome in the warehouse. It is
+    not a direct observation of Google's ranking state and does not explain why the movement occurred.
   </div>
 
-  <div class="card">
-    <div class="metric">
-      <div class="metric-row">
-        <div class="metric-name">Rule baseline</div>
-        <div class="track"><div class="fill" style="width:80%"></div></div>
-        <div class="metric-value">0.80</div>
-      </div>
-      <div class="metric-row">
-        <div class="metric-name">Random Forest</div>
-        <div class="track"><div class="fill" style="width:68%"></div></div>
-        <div class="metric-value">0.68</div>
-      </div>
-      <div class="metric-row">
-        <div class="metric-name">Logistic Regression</div>
-        <div class="track"><div class="fill" style="width:56%"></div></div>
-        <div class="metric-value">0.56</div>
-      </div>
-    </div>
-  </div>
+  <h3>Baseline</h3>
+  <p>
+    The baseline is deliberately transparent. It combines three signals that a reviewer can
+    understand without a model explanation layer: historical impression opportunity, low-CTR
+    opportunity, and freshness opportunity. Their weights are 40%, 35%, and 25% respectively.
+    The point of the baseline is to establish what a simple rule can accomplish before introducing
+    model complexity.
+  </p>
 
-  <table class="data-table">
-    <thead><tr><th>Approach</th><th>Precision@50</th><th>Declining in top 50</th><th>Observed conclusion</th></tr></thead>
+  <h3>Validation design</h3>
+  <p>
+    The final comparison uses a client-grouped holdout. This avoids placing records from the same
+    client on both sides of the evaluation, which could otherwise produce an overly optimistic
+    estimate when client-specific patterns are shared.
+  </p>
+
+  <table class="table">
+    <thead><tr><th>Split</th><th>Records</th><th>Clients</th></tr></thead>
     <tbody>
-      <tr><td><strong>Rule baseline</strong></td><td><strong>0.80</strong></td><td>40 / 50</td><td>Best measured result</td></tr>
-      <tr><td>Random Forest</td><td>0.68</td><td>34 / 50</td><td>12 points below baseline</td></tr>
-      <tr><td>Logistic Regression</td><td>0.56</td><td>28 / 50</td><td>24 points below baseline</td></tr>
+      <tr><td>Training</td><td>99,796</td><td>35</td></tr>
+      <tr><td>Holdout</td><td>4,505</td><td>9</td></tr>
+      <tr><td>Measured client overlap</td><td><strong>0</strong></td><td>—</td></tr>
     </tbody>
   </table>
 
-  <div class="rule green">
-    <strong>Core result.</strong> The experiment does not support adding ML complexity merely because the task is an ML capstone. Under this particular design, the simple rule was more effective at the top of the queue.
-  </div>
-
-  <div class="grid2">
-    <div class="card">
-      <h3>Baseline composition</h3>
-      <p>The winning rule uses three transparent components:</p>
-      <ul>
-        <li><strong>40%</strong> historical impression opportunity</li>
-        <li><strong>35%</strong> low-CTR opportunity</li>
-        <li><strong>25%</strong> freshness opportunity</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>What this does not mean</h3>
-      <p>
-        It does not mean rules will always beat machine learning. It means that the two tested
-        models, the selected features, the chosen outcome and this client-grouped holdout did not
-        outperform this baseline.
-      </p>
-    </div>
-  </div>
-</div>
+  <h3>Evaluation metric</h3>
+  <p>
+    The main metric is <strong>Precision@50</strong>: the fraction of the first 50 ranked records
+    that are actually labeled declining in the holdout. This is intentionally aligned with the
+    practical question of which small group of pages deserves the team's first attention.
+  </p>
 </section>
 
-<section class="section">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">05 · Findings</div><h2>What a content team can reasonably take from the study</h2></div>
+<section id="results">
+  <div class="section-tag">04 · Results</div>
+  <h2>The simplest approach was strongest in this experiment</h2>
+
+  <p>
+    The baseline and both machine-learning models were evaluated on the same holdout. That gives
+    the comparison a single reference point: the same unseen records, the same top-50 decision,
+    and the same target definition.
+  </p>
+
+  <div class="bars">
+    <div class="bar"><div class="bar-name">Rule baseline</div><div class="track"><div class="fill" style="width:80%"></div></div><div class="bar-v">0.80</div></div>
+    <div class="bar"><div class="bar-name">Random Forest</div><div class="track"><div class="fill" style="width:68%"></div></div><div class="bar-v">0.68</div></div>
+    <div class="bar"><div class="bar-name">Logistic Regression</div><div class="track"><div class="fill" style="width:56%"></div></div><div class="bar-v">0.56</div></div>
   </div>
+
+  <table class="table">
+    <thead>
+      <tr><th>Approach</th><th>Precision@50</th><th>Declining in top 50</th><th>Difference vs baseline</th></tr>
+    </thead>
+    <tbody>
+      <tr class="best"><td><strong>Rule baseline</strong></td><td><strong>0.80</strong></td><td>40 / 50</td><td>—</td></tr>
+      <tr><td>Random Forest</td><td>0.68</td><td>34 / 50</td><td>-0.12</td></tr>
+      <tr><td>Logistic Regression</td><td>0.56</td><td>28 / 50</td><td>-0.24</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout green">
+    <strong>Main finding.</strong> The transparent rule-based ranking achieved the best measured
+    top-50 precision on the selected client-grouped holdout. In other words, the tested ML models
+    did not provide enough measured lift to justify their added complexity in this setup.
+  </div>
+
+  <p>
+    This should not be read as a general claim that machine learning is inferior to rules. It is a
+    narrower finding: with this feature set, outcome definition, baseline, model configuration,
+    time window and holdout design, the baseline was the strongest of the tested approaches.
+  </p>
+
+  <div class="pull">
+    <strong>The useful lesson is about evidence.</strong> Complexity should earn its place in the
+    workflow by improving a measured decision, not by being present simply because the project is
+    called machine learning.
+  </div>
+</section>
+
+<section id="findings">
+  <div class="section-tag">05 · Findings</div>
+  <h2>What a search-content team can take from the result</h2>
 
   <div class="findings">
-    <article class="finding"><div class="no">01</div><h3>High visibility + strong decline is worth inspecting</h3><p>Items with meaningful historical visibility and substantial later decline are useful candidates for earlier review.</p></article>
-    <article class="finding"><div class="no">02</div><h3>Simple scoring can be operationally strong</h3><p>In this experiment, a transparent score was easier to explain and also produced the strongest measured top-50 precision.</p></article>
-    <article class="finding"><div class="no">03</div><h3>Top-of-queue quality matters</h3><p>Precision@50 keeps the evaluation aligned with the real use case: limited editorial capacity and a need to prioritize.</p></article>
-    <article class="finding"><div class="no">04</div><h3>A ranking is not a diagnosis</h3><p>A measured decline can have many explanations. The queue tells a reviewer where to look, not what caused the movement.</p></article>
-  </div>
-</div>
-</section>
-
-<section class="section" id="recommendations">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">06 · Ranked recommendations</div><h2>Turn the score into a human review workflow</h2></div>
-  </div>
-
-  <div class="card">
-    <div class="steps">
-      <div class="step"><div class="step-no">1</div><div><strong>Review high-priority items first.</strong> Confirm that the observed decline is meaningful and that the content remains strategically relevant.</div></div>
-      <div class="step"><div class="step-no">2</div><div><strong>Investigate low-CTR opportunity.</strong> Review title, snippet, intent match and SERP context before changing content.</div></div>
-      <div class="step"><div class="step-no">3</div><div><strong>Check freshness.</strong> Confirm whether the page is outdated, incomplete, or misaligned with current user needs.</div></div>
-      <div class="step"><div class="step-no">4</div><div><strong>Allow “monitor” as an action.</strong> Not every measured movement justifies a rewrite.</div></div>
+    <div class="finding">
+      <h3>1. Strong declines are useful for triage</h3>
+      <p>
+        Content with meaningful historical visibility and substantial observed decline is a sensible
+        place to start a human investigation.
+      </p>
+    </div>
+    <div class="finding">
+      <h3>2. Explainable rankings have operational value</h3>
+      <p>
+        A reviewer can understand why a page appears high in the queue without opening a separate
+        model-explanation interface.
+      </p>
+    </div>
+    <div class="finding">
+      <h3>3. Top-of-queue quality matches the real decision</h3>
+      <p>
+        Precision@50 is intentionally focused on the first batch of work rather than treating every
+        row in a very large dataset as equally important.
+      </p>
+    </div>
+    <div class="finding">
+      <h3>4. Ranking is not diagnosis</h3>
+      <p>
+        A measured decline can have many causes. The score tells the reviewer where to look; it does
+        not prove why a page moved.
+      </p>
     </div>
   </div>
+</section>
 
-  <div class="grid2" style="margin-top:18px">
+<section id="recommendations">
+  <div class="section-tag">06 · Ranked recommendations</div>
+  <h2>Turn the score into a human review workflow</h2>
+
+  <p>
+    Because the baseline was the best measured approach, the final queue uses it as the prioritization
+    engine. The public output remains anonymized and does not publish client or content identifiers.
+  </p>
+
+  <ol>
+    <li><strong>Review high-priority candidates first.</strong> Confirm that the observed decline is meaningful and that the content still matters strategically.</li>
+    <li><strong>Inspect the reason behind the score.</strong> A strong decline, weak historical CTR and older content imply different review questions.</li>
+    <li><strong>Check the surrounding search context.</strong> Consider intent, competition, technical health and current content quality before editing.</li>
+    <li><strong>Keep monitoring as a valid outcome.</strong> Movement is not an automatic instruction to rewrite.</li>
+  </ol>
+
+  <div class="two">
     <div class="card">
-      <h3>Reason codes</h3>
+      <h4>Reason codes</h4>
       <p>
-        <span class="inline-tag">STRONG_DECLINE</span>
-        <span class="inline-tag">LOW_CTR_OPPORTUNITY</span>
-        <span class="inline-tag">OLDER_CONTENT</span>
-        <span class="inline-tag">MIXED_SIGNAL</span>
+        <span class="mono">STRONG_DECLINE</span><br>
+        <span class="mono">LOW_CTR_OPPORTUNITY</span><br>
+        <span class="mono">OLDER_CONTENT</span><br>
+        <span class="mono">MIXED_SIGNAL</span>
       </p>
     </div>
     <div class="card">
-      <h3>Human review checklist</h3>
-      <p>Check strategic importance, current demand, technical health, external events, search intent, competing pages and whether refresh is preferable to monitoring, consolidation or no action.</p>
+      <h4>Human review checklist</h4>
+      <p>
+        Strategic importance · current demand · search intent · technical health · external events ·
+        competing pages · freshness · refresh versus monitor versus consolidate
+      </p>
     </div>
   </div>
-</div>
 </section>
 
-<section class="section" id="limits">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">07 · Limitations</div><h2>Keep the claims smaller than the dataset</h2></div>
-  </div>
+<section id="limits">
+  <div class="section-tag">07 · Limitations & honest framing</div>
+  <h2>Keep the claim smaller than the evidence</h2>
 
-  <table class="data-table">
-    <thead><tr><th>Limitation</th><th>Implication</th></tr></thead>
+  <p>
+    The study measures relationships in an observational dataset. It does not establish a causal
+    mechanism for search movement. The decline label is a practical proxy, not a direct measurement
+    of a search engine's internal state.
+  </p>
+
+  <table class="table">
+    <thead><tr><th>Limitation</th><th>What it prevents us from claiming</th></tr></thead>
     <tbody>
-      <tr><td>Observed proxy outcome</td><td>The label measures impression movement, not Google's internal ranking logic.</td></tr>
-      <tr><td>One selected time window</td><td>Results may change with seasonality, demand or future conditions.</td></tr>
-      <tr><td>One client-grouped holdout</td><td>Precision@50 is not a guarantee of future performance.</td></tr>
-      <tr><td>Uneven metadata coverage</td><td>Some content fields have meaningful missingness.</td></tr>
-      <tr><td>Observational design</td><td>The study cannot prove that refreshing a page causes recovery.</td></tr>
+      <tr><td>Observed impression decline is a proxy</td><td>We did not measure Google's internal ranking system.</td></tr>
+      <tr><td>One selected time window</td><td>The result is not guaranteed to repeat in every future period.</td></tr>
+      <tr><td>One grouped holdout</td><td>The measured Precision@50 is not a guarantee of future performance.</td></tr>
+      <tr><td>Uneven metadata coverage</td><td>Every contextual variable cannot be treated as equally reliable.</td></tr>
+      <tr><td>Observational design</td><td>We cannot claim that refreshing a page causes recovery.</td></tr>
     </tbody>
   </table>
 
-  <div class="disclaimer">
-    <strong>Claim discipline:</strong> The findings are best described as observed, measured, directional and decision-support. They should not be presented as causal evidence about Google's ranking algorithm or as proof that a refresh will recover traffic.
+  <div class="callout">
+    <strong>Preferred framing:</strong> observed, measured, associated with, directional,
+    decision-support, candidate for review.
   </div>
-</div>
 </section>
 
-<section class="section" id="repro">
-<div class="container">
-  <div class="section-head">
-    <div><div class="section-num">08 · Reproducibility</div><h2>What another reviewer should be able to find</h2></div>
-  </div>
+<section id="repro">
+  <div class="section-tag">08 · Reproducibility</div>
+  <h2>What a reviewer can inspect</h2>
 
-  <div class="grid2">
-    <div class="card">
-      <h3>Repository artifacts</h3>
-      <p><code>work/notebooks/capstone.ipynb</code></p>
-      <p><code>work/outputs/capstone_model_comparison.csv</code></p>
-      <p><code>work/outputs/capstone_ranked_recommendations.csv</code></p>
-      <p><code>submission/paper_url.txt</code></p>
-    </div>
-    <div class="card">
-      <h3>Public-safe publication</h3>
-      <p>
-        Client names, domains, private queries, credentials and raw private exports are not
-        published. Identifiers are used for internal grouping, joining and validation.
-      </p>
-    </div>
-  </div>
+  <p>
+    The repository contains the analysis notebook, generated outputs, deployed paper and the exact
+    location of the paper. The page is designed to be understandable without requiring the reviewer
+    to run the full warehouse query.
+  </p>
 
-  <div class="card" style="margin-top:18px">
-    <h3>Data credit</h3>
-    <p>Built on the FlyRank ML Internship dataset.</p>
-    <p><a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a></p>
+  <table class="table">
+    <thead><tr><th>Artifact</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><span class="mono">work/notebooks/capstone.ipynb</span></td><td>Capstone analysis and supporting code</td></tr>
+      <tr><td><span class="mono">work/outputs/capstone_model_comparison.csv</span></td><td>Model-versus-baseline result table</td></tr>
+      <tr><td><span class="mono">work/outputs/capstone_ranked_recommendations.csv</span></td><td>Ranked public-safe recommendation output</td></tr>
+      <tr><td><span class="mono">submission/paper_url.txt</span></td><td>Direct URL used to locate the deployed paper</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Public-safe publication</h3>
+  <p>
+    Client names, raw domains, private queries, credentials and raw private exports are intentionally
+    excluded. Identifiers are used only for grouping, joins and validation.
+  </p>
+
+  <h3>Acknowledgments & data credit</h3>
+  <p>
+    Built on the <strong>FlyRank ML Internship dataset</strong>.
+    <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a>.
+  </p>
+
+  <div class="callout green">
+    <strong>Repository:</strong>
+    <a href="https://github.com/Muneebshah1192/flyrank-ml-internship" target="_blank" rel="noopener">
+      github.com/Muneebshah1192/flyrank-ml-internship
+    </a>
   </div>
-</div>
 </section>
 
-<footer class="footer">
-  <div class="container">
-    <strong>Refresh Opportunity Scoring for Search Content</strong>
-    <p>Machine Learning Capstone · FlyRank Internship · Warehouse v20260703</p>
-    <p>This page presents an observed research result and a decision-support workflow.</p>
-    <p><a href="https://github.com/Muneebshah1192/flyrank-ml-internship" target="_blank" rel="noopener">View the repository</a></p>
+</main>
+
+<aside>
+  <div class="side">
+    <div class="side-title">At a glance</div>
+    <p><strong>Author</strong><br>Syed Muneeb Haider Shah</p>
+    <p><strong>Best measured approach</strong><br>Rule baseline</p>
+    <p><strong>Precision@50</strong><br>0.80</p>
+    <p><strong>Holdout client overlap</strong><br>0</p>
+  </div>
+  <nav>
+    <a href="#question">01 · Introduction</a>
+    <a href="#data">02 · Data</a>
+    <a href="#method">03 · Methodology</a>
+    <a href="#results">04 · Results</a>
+    <a href="#findings">05 · Findings</a>
+    <a href="#recommendations">06 · Recommendations</a>
+    <a href="#limits">07 · Limitations</a>
+    <a href="#repro">08 · Reproducibility</a>
+  </nav>
+</aside>
+
+</div>
+
+<footer class="wrap footer">
+  <strong>Refresh Opportunity Scoring for Search Content</strong><br>
+  Syed Muneeb Haider Shah · FlyRank Machine Learning Internship
+  <div class="links">
+    <a href="https://muneebshah1192.github.io/flyrank-ml-internship/" target="_blank" rel="noopener">Live paper</a>
+    <a href="https://github.com/Muneebshah1192/flyrank-ml-internship" target="_blank" rel="noopener">Repository</a>
+    <a href="https://github.com/Muneebshah1192/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb" target="_blank" rel="noopener">Capstone notebook</a>
   </div>
 </footer>
 
-</main>
 </body>
 </html>
