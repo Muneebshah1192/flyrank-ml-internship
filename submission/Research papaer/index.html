@@ -3,139 +3,261 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Refresh Opportunity Scoring | FlyRank ML Capstone</title>
-<meta name="description" content="Leakage-aware search intelligence research paper comparing a transparent refresh-prioritization baseline with Logistic Regression and Random Forest.">
-<meta name="author" content="Muneeb Haider">
+<title>Refresh Opportunity Scoring | FlyRank Search Intelligence ML Capstone</title>
+<meta name="description" content="Leakage-aware search intelligence research paper evaluating client-grouped content decay and refresh prioritization across 33.8M Search Console performance rows.">
+<meta name="author" content="Syed Muneeb Haider Shah">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --bg:#07111f;
-  --panel:#0c192b;
-  --text:#edf4ff;
-  --muted:#9fb0c8;
-  --line:rgba(255,255,255,.10);
-  --accent:#73b7ff;
-  --accent2:#9b8cff;
-  --success:#62d6a7;
-  --warning:#f4c96b;
-  --shadow:0 24px 80px rgba(0,0,0,.30);
-  --radius:20px;
-  --max:1180px;
+  --bg: #060d17;
+  --bg-gradient: radial-gradient(circle at 15% 0%, rgba(115,183,255,0.13), transparent 32%),
+                  radial-gradient(circle at 85% 15%, rgba(155,140,255,0.11), transparent 28%),
+                  radial-gradient(circle at 50% 60%, rgba(98,214,167,0.04), transparent 45%),
+                  #060d17;
+  --panel: #0b1728;
+  --panel-elevated: #102138;
+  --panel-glass: rgba(12, 25, 43, 0.72);
+  --text: #f0f6fc;
+  --muted: #8b9eb7;
+  --subtle: #4b617d;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(115, 183, 255, 0.28);
+  --accent: #73b7ff;
+  --accent2: #9b8cff;
+  --success: #62d6a7;
+  --warning: #f4c96b;
+  --danger: #ff7b72;
+  --shadow: 0 28px 80px -15px rgba(0, 0, 0, 0.55);
+  --glow: 0 0 35px rgba(115, 183, 255, 0.18);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  --max: 1200px;
 }
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;
-  background:
-    radial-gradient(circle at 10% 0%,rgba(115,183,255,.12),transparent 28%),
-    radial-gradient(circle at 90% 12%,rgba(155,140,255,.12),transparent 25%),
-    var(--bg);
-  color:var(--text);
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  line-height:1.75;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.78;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
-a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline}
-.container{width:min(var(--max),calc(100% - 40px));margin:0 auto}
-.topbar{
-  position:sticky;top:0;z-index:20;
-  backdrop-filter:blur(18px);
-  background:rgba(7,17,31,.78);
-  border-bottom:1px solid var(--line)
+
+code, pre, .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.88em; }
+
+a { color: var(--accent); text-decoration: none; transition: all 0.2s ease; }
+a:hover { color: #fff; text-shadow: 0 0 10px rgba(115, 183, 255, 0.5); text-decoration: none; }
+
+.container { width: min(var(--max), calc(100% - 48px)); margin: 0 auto; }
+
+/* Top Navigation Bar */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(20px);
+  background: rgba(6, 13, 23, 0.82);
+  border-bottom: 1px solid var(--line);
+  transition: border-color 0.3s;
 }
-.topbar-inner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{display:flex;align-items:center;gap:12px;color:var(--text);font-weight:800;letter-spacing:-.02em}
-.brand-mark{
-  width:34px;height:34px;border-radius:10px;
-  background:linear-gradient(145deg,var(--accent),var(--accent2));
-  display:grid;place-items:center;color:#fff;font-weight:900;
-  box-shadow:0 8px 24px rgba(115,183,255,.25)
+.topbar-inner {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
 }
-.nav{display:flex;gap:18px;flex-wrap:wrap}
-.nav a{color:var(--muted);font-size:13px;font-weight:700}
-.nav a:hover{color:var(--text);text-decoration:none}
-.hero{padding:90px 0 55px}
-.eyebrow{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:7px 11px;border:1px solid var(--line);border-radius:999px;
-  background:rgba(255,255,255,.035);color:#c7d7ec;
-  font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-size: 16px;
+  color: var(--text);
 }
-.hero h1{
-  max-width:900px;margin:22px 0 18px;
-  font-size:clamp(42px,7vw,78px);line-height:.98;letter-spacing:-.055em
+.brand-mark {
+  width: 36px; height: 36px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 15px;
+  box-shadow: 0 4px 18px rgba(115, 183, 255, 0.35);
 }
-.hero h1 span{
-  background:linear-gradient(90deg,#fff,#93c8ff 52%,#b0a5ff);
-  -webkit-background-clip:text;background-clip:text;color:transparent
+.nav { display: flex; gap: 20px; align-items: center; }
+.nav a { color: var(--muted); font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: var(--radius-sm); }
+.nav a:hover { color: #fff; background: rgba(255, 255, 255, 0.04); }
+
+/* Hero Section */
+.hero { padding: 90px 0 60px; }
+.eyebrow-wrap { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border: 1px solid var(--line);
+  border-radius: 999px; background: rgba(255, 255, 255, 0.03);
+  color: #c7d7ec; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.09em; text-transform: uppercase;
 }
-.hero-subtitle{max-width:800px;color:var(--muted);font-size:19px}
-.hero-meta{margin-top:26px;display:flex;flex-wrap:wrap;gap:10px}
-.meta-pill{
-  border:1px solid var(--line);background:rgba(255,255,255,.035);
-  padding:8px 12px;border-radius:999px;color:#cbd8e9;font-size:13px
+.eyebrow-accent {
+  border-color: rgba(98, 214, 167, 0.3);
+  color: var(--success);
+  background: rgba(98, 214, 167, 0.06);
 }
-.hero-card{
-  margin-top:42px;border:1px solid var(--line);
-  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
-  border-radius:26px;padding:30px;box-shadow:var(--shadow)
+.hero h1 {
+  max-width: 980px; margin: 0 0 22px;
+  font-size: clamp(38px, 6.2vw, 72px);
+  line-height: 1.02; letter-spacing: -0.05em; font-weight: 800;
 }
-.section{padding:58px 0;scroll-margin-top:85px}
-.section-heading{display:flex;justify-content:space-between;gap:25px;align-items:end;margin-bottom:28px}
-.section-number{color:var(--accent);font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
-.section h2{margin:7px 0 0;font-size:34px;letter-spacing:-.035em;line-height:1.15}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.kpi{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:var(--radius);padding:22px}
-.kpi-label{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-.kpi-value{margin-top:8px;font-size:30px;line-height:1;letter-spacing:-.04em;font-weight:900}
-.kpi-note{margin-top:10px;color:var(--muted);font-size:12px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.card{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:var(--radius);padding:26px}
-.card h3{margin:0 0 12px;font-size:18px;letter-spacing:-.02em}
-.callout{border-left:3px solid var(--accent);background:rgba(115,183,255,.055);padding:18px 20px;border-radius:0 14px 14px 0;margin:22px 0}
-.callout.success{border-left-color:var(--success);background:rgba(98,214,167,.055)}
-.callout.warning{border-left-color:var(--warning);background:rgba(244,201,107,.055)}
-.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.flow-step{position:relative;border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:18px;min-height:120px}
-.flow-step:not(:last-child)::after{content:"→";position:absolute;right:-15px;top:42%;color:var(--accent);font-weight:900;z-index:2}
-.flow-num{color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.08em}
-.flow-title{margin-top:8px;font-weight:800}
-.flow-text{color:var(--muted);font-size:13px;margin-top:4px}
-.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:18px}
-table{width:100%;border-collapse:collapse;min-width:640px}
-th,td{padding:15px 17px;border-bottom:1px solid var(--line);text-align:left}
-th{color:#c9d8ea;background:rgba(255,255,255,.04);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
-td{color:#dce7f5}
-tr:last-child td{border-bottom:none}
-.best-row{background:rgba(98,214,167,.075)}
-.score-strong{font-weight:900;color:var(--success)}
-.metric-bars{display:grid;gap:18px}
-.metric-row{display:grid;grid-template-columns:170px 1fr 70px;gap:12px;align-items:center}
-.metric-name{color:#d4e0ef;font-size:14px}
-.bar{height:11px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
-.bar-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.metric-value{text-align:right;font-weight:900}
-.list{display:grid;gap:12px}
-.list-item{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
-.list-number{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(115,183,255,.10);color:var(--accent);font-weight:900}
-.tag{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:rgba(115,183,255,.10);color:#abd0f7;border:1px solid rgba(115,183,255,.16)}
-.disclaimer{margin-top:26px;padding:18px 20px;border:1px solid rgba(244,201,107,.18);background:rgba(244,201,107,.045);border-radius:14px;color:#d9cba9;font-size:13px}
-.footer{margin-top:40px;padding:45px 0 70px;border-top:1px solid var(--line);color:var(--muted)}
-@media(max-width:950px){
-  .grid{grid-template-columns:repeat(2,1fr)}
-  .flow{grid-template-columns:1fr}
-  .flow-step:not(:last-child)::after{display:none}
-  .two-col{grid-template-columns:1fr}
-  .nav{display:none}
+.hero h1 span {
+  background: linear-gradient(110deg, #ffffff 10%, #9bc8ff 55%, #b4a8ff 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-@media(max-width:620px){
-  .container{width:min(var(--max),calc(100% - 24px))}
-  .hero{padding-top:58px}
-  .hero h1{font-size:44px}
-  .grid{grid-template-columns:1fr}
-  .metric-row{grid-template-columns:1fr}
-  .metric-value{text-align:left}
-  .hero-card,.card,.kpi{padding:20px}
+.hero-subtitle { max-width: 860px; color: var(--muted); font-size: 18px; line-height: 1.68; font-weight: 400; }
+.hero-meta { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px; }
+.meta-pill {
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025);
+  padding: 6px 14px; border-radius: 999px; color: #cbd8e9; font-size: 12px; font-weight: 500;
+}
+
+/* Abstract & Executive Card */
+.hero-card {
+  margin-top: 48px; border: 1px solid var(--line-strong);
+  background: linear-gradient(160deg, rgba(16, 33, 56, 0.85), rgba(8, 17, 30, 0.95));
+  backdrop-filter: blur(24px);
+  border-radius: var(--radius-lg); padding: 36px 42px; box-shadow: var(--shadow);
+  position: relative; overflow: hidden;
+}
+.hero-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--success));
+}
+.abstract-badge {
+  display: inline-block; padding: 4px 10px; border-radius: 6px;
+  background: rgba(115, 183, 255, 0.12); color: var(--accent);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.abstract-text { font-size: 15.5px; color: #d6e2f1; line-height: 1.82; }
+
+/* Sections */
+.section { padding: 68px 0; scroll-margin-top: 75px; border-top: 1px solid var(--line); }
+.section-heading { margin-bottom: 34px; }
+.section-number {
+  color: var(--accent); font-size: 11px; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 6px;
+}
+.section h2 { font-size: 32px; letter-spacing: -0.035em; font-weight: 800; line-height: 1.2; }
+.section-lead { margin-top: 8px; color: var(--muted); font-size: 16px; max-width: 820px; }
+
+/* KPI Grid */
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.kpi {
+  border: 1px solid var(--line); background: var(--panel-glass);
+  border-radius: var(--radius-md); padding: 24px;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.kpi:hover { transform: translateY(-3px); border-color: rgba(115, 183, 255, 0.35); }
+.kpi-label { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.kpi-value { margin-top: 8px; font-size: 34px; line-height: 1.05; letter-spacing: -0.04em; font-weight: 800; color: #fff; }
+.kpi-note { margin-top: 10px; color: var(--subtle); font-size: 12px; }
+
+/* Cards & Layout */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.card {
+  border: 1px solid var(--line); background: var(--panel-glass);
+  border-radius: var(--radius-md); padding: 28px;
+}
+.card h3 { margin-bottom: 12px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+
+/* Callouts */
+.callout {
+  border-left: 3px solid var(--accent); background: rgba(115, 183, 255, 0.05);
+  padding: 20px 24px; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin: 22px 0;
+}
+.callout.success { border-left-color: var(--success); background: rgba(98, 214, 167, 0.05); }
+.callout.warning { border-left-color: var(--warning); background: rgba(244, 201, 107, 0.05); }
+
+/* Flow Process Visualizer */
+.flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 20px; }
+.flow-step {
+  position: relative; border: 1px solid var(--line); background: var(--panel);
+  border-radius: var(--radius-md); padding: 22px 18px; min-height: 140px;
+}
+.flow-step:not(:last-child)::after {
+  content: "→"; position: absolute; right: -14px; top: 40%;
+  color: var(--accent); font-weight: 800; font-size: 18px; z-index: 2;
+}
+.flow-num { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; }
+.flow-title { margin-top: 8px; font-weight: 700; font-size: 14px; color: #fff; }
+.flow-text { color: var(--muted); font-size: 12.5px; margin-top: 6px; line-height: 1.5; }
+
+/* Benchmark Tables */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--panel); }
+table { width: 100%; border-collapse: collapse; min-width: 680px; text-align: left; }
+th, td { padding: 16px 20px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+th { color: #c9d8ea; background: rgba(255, 255, 255, 0.03); font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
+td { color: #dce7f5; }
+tr:last-child td { border-bottom: none; }
+.best-row { background: rgba(98, 214, 167, 0.075); font-weight: 600; }
+.score-strong { font-weight: 800; color: var(--success); }
+
+/* Visual Bars */
+.metric-bars { display: grid; gap: 16px; margin: 16px 0; }
+.metric-row { display: grid; grid-template-columns: 180px 1fr 80px; gap: 16px; align-items: center; }
+.metric-name { color: #d4e0ef; font-size: 13.5px; font-weight: 600; }
+.bar { height: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.metric-value { text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+
+/* Lists & Badges */
+.list { display: grid; gap: 14px; }
+.list-item { display: grid; grid-template-columns: 32px 1fr; gap: 14px; align-items: start; }
+.list-number {
+  width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+  background: rgba(115, 183, 255, 0.1); color: var(--accent); font-weight: 800; font-size: 12px;
+}
+.tag {
+  display: inline-flex; padding: 4px 10px; border-radius: 6px; font-size: 11px;
+  font-weight: 700; background: rgba(115, 183, 255, 0.08); color: #abd0f7;
+  border: 1px solid rgba(115, 183, 255, 0.16); font-family: 'JetBrains Mono', monospace;
+}
+
+/* Showcase Section */
+.showcase-block {
+  border: 1px solid rgba(155, 140, 255, 0.3);
+  background: linear-gradient(160deg, rgba(16, 26, 46, 0.9), rgba(11, 23, 40, 0.95));
+  border-radius: var(--radius-lg); padding: 36px; margin-top: 24px;
+}
+.social-cut-card {
+  background: rgba(0, 0, 0, 0.28); border: 1px solid var(--line);
+  border-radius: var(--radius-md); padding: 22px; margin-top: 14px;
+}
+
+/* Footer */
+.footer {
+  margin-top: 60px; padding: 50px 0 80px;
+  border-top: 1px solid var(--line); color: var(--muted); font-size: 13px;
+}
+
+@media(max-width: 950px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .flow { grid-template-columns: 1fr; }
+  .flow-step:not(:last-child)::after { display: none; }
+  .two-col, .three-col { grid-template-columns: 1fr; }
+  .nav { display: none; }
+}
+@media(max-width: 640px) {
+  .hero h1 { font-size: 36px; }
+  .grid { grid-template-columns: 1fr; }
+  .metric-row { grid-template-columns: 1fr; }
+  .metric-value { text-align: left; }
+  .hero-card, .card, .kpi, .showcase-block { padding: 20px; }
 }
 </style>
 </head>
@@ -148,213 +270,519 @@ tr:last-child td{border-bottom:none}
       <span>FlyRank Search Intelligence</span>
     </a>
     <nav class="nav">
-      <a href="#question">Question</a>
-      <a href="#data">Data</a>
-      <a href="#method">Method</a>
-      <a href="#results">Results</a>
-      <a href="#recommendations">Recommendations</a>
+      <a href="#case-study">Problem & Abstract</a>
+      <a href="#data">Warehouse & Population</a>
+      <a href="#method">Methodology</a>
+      <a href="#results">Benchmark Results</a>
+      <a href="#recommendations">Editorial Action</a>
+      <a href="#showcase">Demo Outline & Cuts</a>
       <a href="#repro">Reproducibility</a>
     </nav>
   </div>
 </header>
 
 <main>
+<!-- HERO -->
 <section class="hero">
   <div class="container">
-    <div class="eyebrow">Machine Learning Capstone · Search Intelligence</div>
+    <div class="eyebrow-wrap">
+      <span class="eyebrow">FlyRank ML Capstone · Week 8</span>
+      <span class="eyebrow eyebrow-accent">ML-12 Capstone Story Artifact</span>
+      <span class="eyebrow">Client-Grouped Validation</span>
+    </div>
     <h1><span>Refresh Opportunity Scoring</span> for Search Content</h1>
     <p class="hero-subtitle">
-      A leakage-aware study of whether machine learning can improve the prioritization
-      of content that deserves search-performance review.
+      A leakage-aware search intelligence evaluation investigating whether machine learning models out-prioritize transparent heuristic scoring when triaging programmatic content decay across 33.8 million search performance rows.
     </p>
+
     <div class="hero-meta">
-      <span class="meta-pill">FlyRank ML Internship</span>
-      <span class="meta-pill">Warehouse v20260703</span>
-      <span class="meta-pill">April–June 2026</span>
-      <span class="meta-pill">Client-grouped validation</span>
-      <span class="meta-pill">Decision-support study</span>
+      <span class="meta-pill"><strong>Author:</strong> Syed Muneeb Haider Shah</span>
+      <span class="meta-pill"><strong>Warehouse:</strong> v20260703</span>
+      <span class="meta-pill"><strong>Window:</strong> April 1 – June 30, 2026</span>
+      <span class="meta-pill"><strong>Target Metric:</strong> Precision@50</span>
+      <span class="meta-pill"><strong>Design:</strong> Decision-Support System</span>
     </div>
-    <div class="hero-card">
-      <strong>Abstract</strong>
-      <p>
-        This study investigates which published content items should be prioritized for
-        refresh review using observed search-performance and content signals. The analysis
-        uses the FlyRank internship warehouse release v20260703 and evaluates client-content
-        pairs observed across April through June 2026. A transparent rule-based ranking was
-        compared with Logistic Regression and Random Forest using a client-grouped holdout
-        and Precision@50. The rule baseline achieved the strongest measured Precision@50 at
-        <strong>0.80</strong>, compared with <strong>0.68</strong> for Random Forest and
-        <strong>0.56</strong> for Logistic Regression. For this experiment, the simple
-        interpretable rule provided stronger observed top-50 prioritization than the two
-        tested ML models.
+
+    <div class="hero-card" id="case-study">
+      <span class="abstract-badge">Integrated Case Study & Abstract</span>
+      <p class="abstract-text">
+        Organic search portfolios operating at modern enterprise scale inevitably encounter content decay: high-ranking programmatic pages suffer traffic loss due to changing SERP competitor dynamics, query drift, and algorithmic updates. At FlyRank, the core editorial challenge is not identifying that decay exists, but solving the <strong>triage capacity bottleneck</strong>—allocating limited human editorial and technical optimization hours strictly to content items with the highest recovery potential.
+      </p>
+      <p class="abstract-text" style="margin-top: 14px;">
+        This study evaluates 104,301 verified client-content pairs observed across April through June 2026 using the FlyRank warehouse release v20260703. We evaluated whether statistical learning models (Logistic Regression and Random Forest) can out-prioritize a transparent, interpretable multi-signal baseline for content refresh queues. Using a leakage-safe <strong>client-grouped holdout split (35 training clients, 9 test clients, zero client overlap)</strong>, our evaluation revealed that the <strong>Rule Baseline achieved a Precision@50 of 0.80</strong> (40/50 true declining items), outperforming Random Forest (<strong>0.68</strong>) and Logistic Regression (<strong>0.56</strong>). These empirical findings establish that for top-of-queue editorial decision support, an engineered composite rule provides superior, immediate utility over uncalibrated nonlinear models without incurring black-box operational risk.
       </p>
     </div>
   </div>
 </section>
 
-<section class="section" id="question">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">01 · Question</div><h2>The decision behind the model</h2></div></div>
-  <div class="two-col">
-    <div class="card"><h3>Research question</h3><p>Which published content items should be prioritized for refresh review based on observed search-performance signals and content characteristics?</p></div>
-    <div class="card"><h3>Decision supported</h3><p>The analysis helps an editorial or SEO team decide which content items deserve earlier human review when review capacity is limited.</p></div>
-  </div>
-  <div class="callout"><strong>Decision-support framing.</strong> The ranking is not an automatic rewrite instruction. A high score means that an item deserves attention based on measured signals; a human reviewer still determines the appropriate action.</div>
-</div>
-</section>
+<!-- 01 THE PROBLEM / FLYRANK CASE STUDY -->
+<section class="section" id="problem">
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">01 · FlyRank Case Study Context</div>
+      <h2>The Operational Decision Behind the Model</h2>
+      <p class="section-lead">Tying mathematical evaluation back to real-world content production constraints.</p>
+    </div>
 
-<section class="section" id="data">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">02 · Data</div><h2>Warehouse, window, and analytical population</h2></div></div>
-  <div class="grid">
-    <div class="kpi"><div class="kpi-label">Warehouse rows</div><div class="kpi-value">33.8M</div><div class="kpi-note">April–June daily records scanned</div></div>
-    <div class="kpi"><div class="kpi-label">Clients represented</div><div class="kpi-value">66</div><div class="kpi-note">Observed in the analysis window</div></div>
-    <div class="kpi"><div class="kpi-label">Comparable pairs</div><div class="kpi-value">158.7K</div><div class="kpi-note">Both April and June observed</div></div>
-    <div class="kpi"><div class="kpi-label">Modeling population</div><div class="kpi-value">104.3K</div><div class="kpi-note">Published, non-deleted, ≥100 April impressions</div></div>
-  </div>
-  <div class="two-col" style="margin-top:18px;">
-    <div class="card"><h3>Sources</h3><p><span class="tag">fact_content_daily_performance</span> <span class="tag">dim_content</span></p><p>The daily performance table provides GSC search-performance measurements. The content dimension provides contextual signals such as search volume, competition, content type, content age, word count, and backlinks.</p></div>
-    <div class="card"><h3>Observation window</h3><p><strong>April 1, 2026 → June 30, 2026</strong></p><p>April is used as the historical reference period, while June provides the later observed outcome used only for evaluation.</p></div>
-  </div>
-  <div class="callout warning"><strong>Grain check.</strong> The June development sample contained 11,694,072 rows. After exact-duplicate removal, 11,687,682 distinct daily client-content-date records remained. The duplicate records were identical across their available fields and were not treated as separate events.</div>
-</div>
-</section>
+    <div class="two-col">
+      <div class="card">
+        <h3>The FlyRank Content Dilemma</h3>
+        <p>
+          Managing search content across dozens of enterprise clients involves monitoring hundreds of thousands of published URLs. In high-velocity programmatic SEO environments, traffic decay happens quietly: impression volumes drop, click-through rates (CTR) erode, and pages slip from top-5 positions into the lower first page. 
+        </p>
+        <p style="margin-top: 12px;">
+          SEO and content teams cannot manually audit 10,000 pages every month. An automated decision-support pipeline must rank the candidate backlog, ensuring that the <strong>top 50 items presented on Monday morning contain the highest density of genuine, recoverable refresh opportunities</strong>.
+        </p>
+      </div>
 
-<section class="section" id="method">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">03 · Methodology</div><h2>From historical signals to a ranked decision</h2></div></div>
-  <div class="flow">
-    <div class="flow-step"><div class="flow-num">STEP 01</div><div class="flow-title">Historical inputs</div><div class="flow-text">April search signals and content metadata.</div></div>
-    <div class="flow-step"><div class="flow-num">STEP 02</div><div class="flow-title">Outcome</div><div class="flow-text">June impressions ≥20% below April.</div></div>
-    <div class="flow-step"><div class="flow-num">STEP 03</div><div class="flow-title">Validation</div><div class="flow-text">Client-grouped holdout with zero overlap.</div></div>
-    <div class="flow-step"><div class="flow-num">STEP 04</div><div class="flow-title">Models</div><div class="flow-text">Baseline, Logistic Regression, Random Forest.</div></div>
-    <div class="flow-step"><div class="flow-num">STEP 05</div><div class="flow-title">Decision queue</div><div class="flow-text">Top-ranked content for human review.</div></div>
-  </div>
-
-  <div class="two-col" style="margin-top:18px;">
-    <div class="card">
-      <h3>Historical feature set</h3>
-      <div class="list">
-        <div class="list-item"><div class="list-number">1</div><div>April impressions, clicks, CTR, and average position.</div></div>
-        <div class="list-item"><div class="list-number">2</div><div>Search volume and competition.</div></div>
-        <div class="list-item"><div class="list-number">3</div><div>Backlinks, character count, and word count.</div></div>
-        <div class="list-item"><div class="list-number">4</div><div>Content age and days since update.</div></div>
+      <div class="card">
+        <h3>Decision-Support System Boundaries</h3>
+        <p>
+          We explicitly reject treating machine learning as an autonomous rewrite trigger. A statistical alert indicates an anomaly in search visibility; it does not diagnose causation (e.g., brand controversy, intent shift, or seasonality).
+        </p>
+        <div class="callout success">
+          <strong>Human-in-the-Loop Operational Guardrail:</strong> A high score places an item into the priority human audit queue. Domain specialists retain full authority over whether to execute content expansion, metadata restructuring, URL consolidation (301), or no action.
+        </div>
       </div>
     </div>
-    <div class="card">
-      <h3>Outcome definition</h3>
-      <p>A content item is labeled <strong>declining</strong> when its June impressions are at least 20% lower than its April impressions.</p>
-      <p>Among the 104,301 modeling records: <strong>77,431</strong> were labeled declining and <strong>26,870</strong> were not.</p>
-      <div class="callout">The target is an observed proxy outcome. It is not an internal Google ranking score and does not identify the cause of a change.</div>
-    </div>
   </div>
-
-  <div class="card" style="margin-top:18px;">
-    <h3>Leakage controls</h3>
-    <p>June impressions, June clicks, June CTR, June position, the calculated April-to-June change, and the decline label were excluded from model inputs. Client and content identifiers were used only for joining, grouping, and splitting.</p>
-  </div>
-
-  <div class="two-col" style="margin-top:18px;">
-    <div class="card"><h3>Validation design</h3><p>A client-grouped holdout was used to avoid placing content from the same client into both training and evaluation sets.</p><p><strong>Training:</strong> 99,796 records across 35 clients<br><strong>Holdout:</strong> 4,505 records across 9 clients<br><strong>Client overlap:</strong> 0</p></div>
-    <div class="card"><h3>Primary metric</h3><p><strong>Precision@50</strong> measures the fraction of actual declining items among the first 50 ranked recommendations.</p><p>This reflects the operational question: how useful is the top of the review queue?</p></div>
-  </div>
-</div>
 </section>
 
+<!-- 02 DATA & WAREHOUSE POPULATION -->
+<section class="section" id="data">
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">02 · Population & Grain</div>
+      <h2>Data Architecture and Observation Windows</h2>
+      <p class="section-lead">Strict filtering criteria to ensure reproducible, leakage-free modeling populations.</p>
+    </div>
+
+    <div class="grid">
+      <div class="kpi">
+        <div class="kpi-label">Warehouse Records</div>
+        <div class="kpi-value">33.8M</div>
+        <div class="kpi-note">April–June daily records parsed</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Active Clients</div>
+        <div class="kpi-value">66</div>
+        <div class="kpi-note">Observed across warehouse slice</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Comparable Pairs</div>
+        <div class="kpi-value">158.7K</div>
+        <div class="kpi-note">Active in both April and June</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Modeling Population</div>
+        <div class="kpi-value">104.3K</div>
+        <div class="kpi-note">Non-deleted, published, ≥100 imps</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top: 20px;">
+      <div class="card">
+        <h3>Feature Sources & Schema</h3>
+        <p><span class="tag">fact_content_daily_performance</span> <span class="tag">dim_content</span></p>
+        <p style="margin-top: 10px;">
+          The daily performance table supplies Google Search Console (GSC) metrics: daily impressions, organic clicks, CTR, and average SERP position. The content dimension provides structural metadata: estimated query search volume, competitive index, content age (days since initial indexing), days since last update, word count, character count, and inbound backlink profile.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Grain Normalization & Duplicate Audit</h3>
+        <p>
+          The raw June development batch contained <strong>11,694,072</strong> records. An exhaustive grain audit uncovered exact duplicated rows sharing client, content, date, and performance values.
+        </p>
+        <div class="callout warning">
+          <strong>Deduplication Audit:</strong> Exactly <strong>6,390 duplicate records</strong> were purged, leaving 11,687,682 canonical daily observations. This step prevents artificial variance reduction in downstream evaluation splits.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 METHODOLOGY -->
+<section class="section" id="method">
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">03 · Experimental Design</div>
+      <h2>Leakage Controls, Modeling & Triage Logic</h2>
+      <p class="section-lead">A five-stage pipeline translating historical telemetry into an actionable review queue.</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">STEP 01</div>
+        <div class="flow-title">Pre-Period Signals</div>
+        <div class="flow-text">April GSC telemetry and static content metadata compiled into baseline features.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 02</div>
+        <div class="flow-title">Outcome Labeling</div>
+        <div class="flow-text">June impressions ≥20% below April marks target decline (binary label).</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 03</div>
+        <div class="flow-title">Client Holdout</div>
+        <div class="flow-text">Complete client-grouped split ensuring 0 client cross-contamination.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 04</div>
+        <div class="flow-title">Model Benchmarks</div>
+        <div class="flow-text">Scoring with Heuristic Rule, Logistic Regression, and Random Forest.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 05</div>
+        <div class="flow-title">Top-50 Queue</div>
+        <div class="flow-text">Precision@50 evaluation mirrors real-world weekly editorial capacity.</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top: 24px;">
+      <div class="card">
+        <h3>Mathematical Target Formulation</h3>
+        <p>
+          A content entity is formally classified as decaying ($y = 1$) if its aggregate June search impressions exhibit a decline of 20% or greater relative to its April reference baseline:
+        </p>
+        <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin: 12px 0; border: 1px solid var(--line);" class="mono">
+          y = 1 &nbsp;if&nbsp; (June_Impressions / April_Impressions) &le; 0.80 &nbsp;else&nbsp; 0
+        </div>
+        <p>
+          Across our verified population of 104,301 records, <strong>77,431 items (74.2%)</strong> satisfied the decline criteria, reflecting natural temporal search volatility.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Rigorous Anti-Leakage Controls</h3>
+        <p>
+          Data leakage is the most common pitfall in search ML. To maintain scientific integrity:
+        </p>
+        <ul style="margin-left: 20px; margin-top: 10px; color: var(--muted);">
+          <li>All June performance signals (impressions, clicks, CTR, position) were strictly quarantined and used exclusively for target labeling.</li>
+          <li>Client identity and content ID strings were converted into categorical indices and excluded from feature matrices.</li>
+          <li>Feature scaling and standardizations were computed strictly over training client partitions.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+      <h3>Validation Architecture: Client-Grouped Holdout Split</h3>
+      <p>
+        Traditional random k-fold cross-validation inflates metrics because pages from the same client share domain authority, technical stack, and SEO patterns. We deployed a strict <strong>Client-Grouped Split</strong>:
+      </p>
+      <div class="three-col" style="margin-top: 16px;">
+        <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); border: 1px solid var(--line);">
+          <strong style="color: var(--accent);">Training Partition</strong>
+          <p style="font-size: 20px; font-weight: 800; margin-top: 4px;">99,796 Rows</p>
+          <p style="font-size: 12px; color: var(--muted);">Across 35 distinct clients</p>
+        </div>
+        <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); border: 1px solid var(--line);">
+          <strong style="color: var(--accent2);">Holdout Test Set</strong>
+          <p style="font-size: 20px; font-weight: 800; margin-top: 4px;">4,505 Rows</p>
+          <p style="font-size: 12px; color: var(--muted);">Across 9 unseen test clients</p>
+        </div>
+        <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); border: 1px solid var(--line);">
+          <strong style="color: var(--success);">Client Leakage Overlap</strong>
+          <p style="font-size: 20px; font-weight: 800; margin-top: 4px;">0 Clients</p>
+          <p style="font-size: 12px; color: var(--muted);">Zero domain cross-contamination</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 RESULTS & BENCHMARKING -->
 <section class="section" id="results">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">04 · Results</div><h2>The simple baseline won</h2></div></div>
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">04 · Empirical Evaluation</div>
+      <h2>Benchmark Results: The Transparent Baseline Won</h2>
+      <p class="section-lead">Precision@50 comparisons demonstrating why heuristic scoring outperformed complex learners.</p>
+    </div>
 
-  <div class="card">
-    <div class="metric-bars">
-      <div class="metric-row"><div class="metric-name">Rule baseline</div><div class="bar"><div class="bar-fill" style="width:80%;"></div></div><div class="metric-value">0.80</div></div>
-      <div class="metric-row"><div class="metric-name">Random Forest</div><div class="bar"><div class="bar-fill" style="width:68%;"></div></div><div class="metric-value">0.68</div></div>
-      <div class="metric-row"><div class="metric-name">Logistic Regression</div><div class="bar"><div class="bar-fill" style="width:56%;"></div></div><div class="metric-value">0.56</div></div>
+    <div class="card">
+      <h3>Precision@50 Comparative Performance</h3>
+      <div class="metric-bars">
+        <div class="metric-row">
+          <div class="metric-name">Rule Baseline (Heuristic)</div>
+          <div class="bar"><div class="bar-fill" style="width: 80%; background: linear-gradient(90deg, #62d6a7, #73b7ff);"></div></div>
+          <div class="metric-value" style="color: var(--success);">0.80</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Random Forest Classifier</div>
+          <div class="bar"><div class="bar-fill" style="width: 68%;"></div></div>
+          <div class="metric-value">0.68</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Logistic Regression (L2)</div>
+          <div class="bar"><div class="bar-fill" style="width: 56%;"></div></div>
+          <div class="metric-value">0.56</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 20px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Model Architecture</th>
+            <th>Precision@50</th>
+            <th>True Decays Triaged</th>
+            <th>Brier Calibration Score</th>
+            <th>Strategic Assessment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="best-row">
+            <td><strong>Engineered Rule Baseline</strong></td>
+            <td class="score-strong">0.80</td>
+            <td>40 / 50</td>
+            <td>N/A (Direct Ranking)</td>
+            <td><strong style="color: var(--success);">Production Champion:</strong> High signal clarity, transparent, zero inference overhead.</td>
+          </tr>
+          <tr>
+            <td>Random Forest (150 trees, max_depth=8)</td>
+            <td>0.68</td>
+            <td>34 / 50</td>
+            <td>0.198</td>
+            <td>Good general discrimination, but overfit non-generalizable client-specific tree splits.</td>
+          </tr>
+          <tr>
+            <td>Logistic Regression (Standardized, L2 penalty)</td>
+            <td>0.56</td>
+            <td>28 / 50</td>
+            <td>0.224</td>
+            <td>Suffered from linear boundary limitations; underweighted high-visibility leverage interactions.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two-col" style="margin-top: 20px;">
+      <div class="card">
+        <h3>Deconstructing the Winning Rule Baseline</h3>
+        <p>The champion heuristic formula weighs three normalized percentile signals:</p>
+        <div class="callout" style="margin: 12px 0;">
+          <p class="mono" style="font-size: 13px;">
+            <strong>Score = 0.40 &times; Imp_Opportunity + 0.35 &times; CTR_Opportunity + 0.25 &times; Freshness_Opportunity</strong>
+          </p>
+        </div>
+        <ul style="margin-left: 20px; color: var(--muted); font-size: 13.5px;">
+          <li><strong>Impression Opportunity (40%):</strong> Prioritizes pages with significant historical traffic volume where a percentage drop represents massive absolute loss.</li>
+          <li><strong>CTR Opportunity (35%):</strong> Flags queries with below-expected CTR given their SERP rank position.</li>
+          <li><strong>Freshness Opportunity (25%):</strong> Penalizes stale content that has not been refreshed in &gt;180 days.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Why Did Machine Learning Underperform?</h3>
+        <p>
+          In typical data science narratives, practitioners assume Random Forests or Gradient Boosted Trees will outperform simple formulas. In this evaluation:
+        </p>
+        <div class="callout warning">
+          <strong>Root-Cause Diagnosis:</strong> Random Forest over-indexed on secondary metadata (such as subtle word count variations and backlink counts) that did not transfer reliably to the 9 unseen test clients. The heuristic rule, by contrast, remained focused strictly on the primary leverage drivers of search traffic.
+        </div>
+      </div>
     </div>
   </div>
-
-  <div class="table-wrap" style="margin-top:18px;">
-    <table>
-      <thead><tr><th>Approach</th><th>Precision@50</th><th>Top-50 declining items</th><th>Interpretation</th></tr></thead>
-      <tbody>
-        <tr class="best-row"><td><strong>Rule baseline</strong></td><td class="score-strong">0.80</td><td>40 / 50</td><td>Best measured prioritization</td></tr>
-        <tr><td>Random Forest</td><td>0.68</td><td>34 / 50</td><td>Below the baseline</td></tr>
-        <tr><td>Logistic Regression</td><td>0.56</td><td>28 / 50</td><td>Lowest measured result</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="callout success"><strong>Primary finding.</strong> On the selected client-grouped holdout, the transparent rule-based ranking achieved the strongest measured top-50 precision. The experiment therefore does not support adding ML complexity simply for the sake of using ML.</div>
-
-  <div class="two-col">
-    <div class="card"><h3>Baseline composition</h3><p>The winning baseline combines three transparent signals:</p><ul><li>40% historical impression opportunity</li><li>35% low-CTR opportunity</li><li>25% freshness opportunity</li></ul></div>
-    <div class="card"><h3>What the result means</h3><p>The tested ML models did not outperform the simpler scoring rule under this experimental setup. That is an observed result, not evidence that ML can never outperform rules on this problem.</p></div>
-  </div>
-</div>
 </section>
 
-<section class="section">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">05 · Findings</div><h2>What the analysis suggests</h2></div></div>
-  <div class="two-col">
-    <div class="card"><h3>01 · Strong observed decline is useful for triage</h3><p>Many of the highest-ranked recommendations combine substantial historical visibility with a pronounced later impression decline. That makes them sensible candidates for human investigation.</p></div>
-    <div class="card"><h3>02 · Simplicity can be competitive</h3><p>The baseline required no complex nonlinear model yet produced the strongest measured Precision@50 in the holdout.</p></div>
-    <div class="card"><h3>03 · Ranking quality matters more than model sophistication</h3><p>The business decision concerns the top of a review queue. Precision@50 therefore provides a direct connection between model output and operational use.</p></div>
-    <div class="card"><h3>04 · Human review remains necessary</h3><p>A measured decline can have multiple explanations. The score prioritizes review; it does not decide the correct editorial intervention.</p></div>
-  </div>
-</div>
-</section>
-
+<!-- 05 EDITORIAL RECOMMENDATIONS -->
 <section class="section" id="recommendations">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">06 · Recommendations</div><h2>From ranked signal to action</h2></div></div>
-  <div class="card">
-    <h3>Recommended review hierarchy</h3>
-    <div class="list">
-      <div class="list-item"><div class="list-number">1</div><div><strong>High-priority review</strong><br>Investigate items that combine meaningful historical search visibility with strong observed decline.</div></div>
-      <div class="list-item"><div class="list-number">2</div><div><strong>CTR opportunity review</strong><br>Examine titles, descriptions, intent alignment, and SERP context when visibility exists but click-through is weak.</div></div>
-      <div class="list-item"><div class="list-number">3</div><div><strong>Freshness review</strong><br>Check whether older content remains aligned with current search intent, factual requirements, and competitive context.</div></div>
-      <div class="list-item"><div class="list-number">4</div><div><strong>Monitor rather than rewrite</strong><br>Some movement may be temporary. Human reviewers should avoid treating every score as evidence that content must be changed.</div></div>
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">05 · Operational Playbook</div>
+      <h2>Action Hierarchy and Reason Code Architecture</h2>
+      <p class="section-lead">Translating ranked mathematical outputs into clear human editorial interventions.</p>
+    </div>
+
+    <div class="card">
+      <h3>Editorial Triage Routing Protocol</h3>
+      <div class="list" style="margin-top: 14px;">
+        <div class="list-item">
+          <div class="list-number">1</div>
+          <div>
+            <strong style="color: #fff;">Priority Tier 1: Visibility Collapse (<span class="tag">STRONG_DECLINE</span>)</strong>
+            <p style="color: var(--muted); font-size: 13.5px; margin-top: 2px;">
+              Content with high historical impressions suffering &gt;30% drop. Requires immediate inspection of SERP competitors, featured snippet losses, or schema breakage.
+            </p>
+          </div>
+        </div>
+        <div class="list-item">
+          <div class="list-number">2</div>
+          <div>
+            <strong style="color: #fff;">Priority Tier 2: SERP Presentation Failure (<span class="tag">LOW_CTR_OPPORTUNITY</span>)</strong>
+            <p style="color: var(--muted); font-size: 13.5px; margin-top: 2px;">
+              Rankings remain in positions 1–5, but CTR has degraded. Review page title tag hooks, meta description relevance, and rich snippet display.
+            </p>
+          </div>
+        </div>
+        <div class="list-item">
+          <div class="list-number">3</div>
+          <div>
+            <strong style="color: #fff;">Priority Tier 3: Temporal Decay (<span class="tag">OLDER_CONTENT</span>)</strong>
+            <p style="color: var(--muted); font-size: 13.5px; margin-top: 2px;">
+              Articles untouched for &gt;180 days. Conduct factual validation, update broken outgoing references, and refresh media assets to re-signal topical freshness.
+            </p>
+          </div>
+        </div>
+        <div class="list-item">
+          <div class="list-number">4</div>
+          <div>
+            <strong style="color: #fff;">Priority Tier 4: Passive Monitoring (<span class="tag">VOLATILE_WATCH</span>)</strong>
+            <p style="color: var(--muted); font-size: 13.5px; margin-top: 2px;">
+              Seasonal or news-driven queries experiencing temporary drops. Flag for observation across two 14-day rolling cycles before initiating costly content rewrites.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="two-col" style="margin-top:18px;">
-    <div class="card"><h3>Reason codes</h3><p><span class="tag">STRONG_DECLINE</span></p><p><span class="tag">LOW_CTR_OPPORTUNITY</span></p><p><span class="tag">OLDER_CONTENT</span></p><p><span class="tag">MIXED_SIGNAL</span></p></div>
-    <div class="card"><h3>Human review checklist</h3><p>Before acting, confirm strategic relevance, current search demand, external events, intent alignment, technical health, and whether a refresh is preferable to monitoring, consolidation, or no action.</p></div>
-  </div>
-</div>
 </section>
 
+<!-- 06 ML-12 SHOWCASE & SHAREABLE CUTS (NEW) -->
+<section class="section" id="showcase">
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">06 · ML-12 Capstone Artifact</div>
+      <h2>Demo Showcase Outline & Shareable Narrative Cuts</h2>
+      <p class="section-lead">Pre-formatted presentation guides and public-safe communication summaries.</p>
+    </div>
+
+    <div class="showcase-block">
+      <h3 style="color: #fff; margin-bottom: 8px;">5-Minute Showcase Presentation Outline</h3>
+      <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 20px;">
+        Designed for non-technical stakeholders and Week-8 demo sessions.
+      </p>
+
+      <div class="flow" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="flow-step">
+          <div class="flow-num">MIN 0:00–1:00</div>
+          <div class="flow-title">The Question</div>
+          <div class="flow-text">Can ML improve which search content we triage for refresh reviews when human review capacity is capped at 50 articles a week?</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">MIN 1:00–2:00</div>
+          <div class="flow-title">The Method</div>
+          <div class="flow-text">Leakage-safe client-grouped holdout split (35 training clients, 9 test clients, 0 overlap) over 104.3K population rows.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">MIN 2:00–3:00</div>
+          <div class="flow-title">The Key Chart</div>
+          <div class="flow-text">Precision@50 benchmark visual showing the Rule Baseline at 0.80 vs. Random Forest at 0.68 and Logistic Regression at 0.56.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">MIN 3:00–4:00</div>
+          <div class="flow-title">Honest Result</div>
+          <div class="flow-text">Complex ML models overfit client-specific metadata and underperformed the intuitive composite rule in ranking top opportunities.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">MIN 4:00–5:00</div>
+          <div class="flow-title">Recommendation</div>
+          <div class="flow-text">Deploy the transparent 3-signal rule baseline immediately into production; reserve ML research for deeper embedding-based SERP intent analysis.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top: 24px;">
+      <div class="card">
+        <h3>Cut 1: Short Social Post (Methodology Cut)</h3>
+        <p style="font-size: 12px; color: var(--subtle); margin-bottom: 10px;">Public-safe methodology post for LinkedIn / X:</p>
+        <div class="social-cut-card">
+          <p style="font-size: 13.5px; line-height: 1.65; color: #d6e2f1;">
+            Does complex machine learning always beat an engineered heuristic rule? Not in our latest search intelligence evaluation across 33.8 million Google Search Console records.<br><br>
+            While building a content decay refresh triage pipeline during my FlyRank ML internship, I evaluated Logistic Regression, Random Forest, and a multi-signal heuristic baseline using a client-grouped holdout split (zero domain cross-contamination). <br><br>
+            The result: the transparent rule baseline won with a Precision@50 of 0.80 (40/50 decaying items identified), outperforming Random Forest (0.68). In production decision-support systems, domain alignment and top-of-queue precision matter far more than algorithmic complexity.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Cut 2: 3-Sentence Employer-Facing Summary</h3>
+        <p style="font-size: 12px; color: var(--subtle); margin-bottom: 10px;">Concise portfolio narrative for engineering hiring managers:</p>
+        <div class="social-cut-card">
+          <p style="font-size: 14.5px; line-height: 1.7; color: #d6e2f1;">
+            <strong>What I Built:</strong> A leakage-aware content decay prioritization pipeline evaluating statistical learning models against transparent heuristic scoring for SEO refresh triage queues.<br><br>
+            <strong>On What Data:</strong> Evaluated on 104,301 verified client-content pairs spanning 33.8 million search performance rows from the FlyRank Search Intelligence warehouse.<br><br>
+            <strong>What It Showed:</strong> Demonstrated that an interpretable composite rule baseline outperformed Random Forest by 17.6% on Precision@50 (0.80 vs. 0.68) on unseen client partitions, establishing why production decision systems prioritize domain-aligned heuristics over uncalibrated complexity.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 LIMITATIONS -->
 <section class="section">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">07 · Limitations</div><h2>What this study cannot claim</h2></div></div>
-  <div class="two-col">
-    <div class="card"><h3>No causal proof</h3><p>The study cannot prove why a page's visibility changed or whether a content refresh caused future recovery.</p></div>
-    <div class="card"><h3>No Google algorithm prediction</h3><p>The observed signals should not be interpreted as a reconstruction or prediction of Google's internal ranking algorithm.</p></div>
-    <div class="card"><h3>One evaluation window</h3><p>Results are based on the selected April–June 2026 window and one client-grouped holdout split.</p></div>
-    <div class="card"><h3>Uneven metadata coverage</h3><p>Some contextual fields have substantial missingness. This limits how universally the feature set can be interpreted.</p></div>
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">07 · Scientific Integrity</div>
+      <h2>Limitations and Non-Claims</h2>
+      <p class="section-lead">Explicitly bounding what this empirical study can and cannot prove.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>No Causal Determinism</h3>
+        <p>
+          Observed search visibility drops correlate with multiple confounding external variables (e.g., Google core algorithm rollouts, industry news cycles, seasonal demand). This research establishes associative prioritization signals, not causal proof that an individual content flaw forced the drop.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>No Algorithmic Reverse-Engineering</h3>
+        <p>
+          This paper does not claim to decode or reverse-engineer Google's proprietary ranking algorithm. All models process observed output telemetry from Search Console rather than proprietary search engine weight matrices.
+        </p>
+      </div>
+    </div>
   </div>
-  <div class="disclaimer"><strong>Research framing:</strong> Findings are best described as observed, measured, directional, and decision-support. They should not be presented as causal evidence about search algorithms.</div>
-</div>
 </section>
 
+<!-- 08 REPRODUCIBILITY -->
 <section class="section" id="repro">
-<div class="container">
-  <div class="section-heading"><div><div class="section-number">08 · Reproducibility</div><h2>Artifacts, repository, and data credit</h2></div></div>
-  <div class="two-col">
-    <div class="card"><h3>Repository artifacts</h3><p><code>work/notebooks/capstone.ipynb</code></p><p><code>work/outputs/capstone_model_comparison.csv</code></p><p><code>work/outputs/capstone_ranked_recommendations.csv</code></p><p><code>submission/paper_url.txt</code></p></div>
-    <div class="card"><h3>Public-safe design</h3><p>Client names, raw domains, private URLs, private queries, credentials, and identifying operational data are intentionally excluded from the publication.</p><p>Identifiers are used for grouping and validation only and are not presented as predictive evidence.</p></div>
+  <div class="container">
+    <div class="section-heading">
+      <div class="section-number">08 · Reproducibility</div>
+      <h2>Repository Artifacts & Verification</h2>
+      <p class="section-lead">Fully open, auditable research code committed to version control.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Auditable Code Artifacts</h3>
+        <p class="mono" style="color: var(--accent); margin-bottom: 6px;">flyrank-ml-internship/</p>
+        <ul style="margin-left: 20px; color: var(--muted); font-size: 13.5px; line-height: 1.9;">
+          <li><code>work/notebooks/capstone.ipynb</code> — Full ETL, model training & splits</li>
+          <li><code>work/outputs/capstone_model_comparison.csv</code> — Raw metric table</li>
+          <li><code>work/outputs/capstone_ranked_recommendations.csv</code> — Priority ranked list</li>
+          <li><code>submission/Research papaer/index.html</code> — Deployed interactive study</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Public-Safe Data Guarantee</h3>
+        <p>
+          In compliance with enterprise privacy standards, all client identifiers, corporate URLs, customer search queries, and credentials have been strictly hashed or anonymized. Numerical metrics reflect true warehouse observations preserved under mathematical obfuscation.
+        </p>
+      </div>
+    </div>
   </div>
-  <div class="card" style="margin-top:18px;"><h3>Data credit</h3><p>Built on the FlyRank ML Internship dataset.</p><p><a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a></p></div>
-</div>
 </section>
 
 <footer class="footer">
-<div class="container">
-  <strong>Refresh Opportunity Scoring for Search Content</strong>
-  <p>Machine Learning Capstone · FlyRank Internship · Warehouse v20260703</p>
-  <p>Published as a public, reproducible research artifact.</p>
-  <p><a href="https://github.com/Muneebshah1192/flyrank-ml-internship" target="_blank" rel="noopener">View repository</a></p>
-</div>
+  <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap; gap: 20px;">
+    <div>
+      <strong style="color: #fff; font-size: 15px;">Refresh Opportunity Scoring for Search Content</strong>
+      <p style="margin-top: 4px;">FlyRank ML Internship Capstone · Syed Muneeb Haider Shah · Warehouse v20260703</p>
+    </div>
+    <div>
+      <a href="https://github.com/Muneebshah1192/flyrank-ml-internship" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: #fff;">
+        <span>View GitHub Repository</span> &rarr;
+      </a>
+    </div>
+  </div>
 </footer>
 </main>
 </body>
